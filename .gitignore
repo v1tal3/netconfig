@@ -9,3 +9,5 @@ instance/settings.py
 flask/
 tmp/*
 app/log/
+*.txt
+*.csv
