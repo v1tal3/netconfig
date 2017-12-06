@@ -7,4 +7,5 @@ scripts_bank/textfiles/*
 log/*
 instance/settings.py
 flask/
-tmp/
+tmp/*
+app/log/
