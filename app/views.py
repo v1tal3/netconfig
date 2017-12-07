@@ -740,13 +740,8 @@ def modalCmdShowRunConfig(x):
 
     activeSession = retrieveSSHSession(host)
 
-    if host.ios_type == 'cisco_nxos':
-      command = 'show running-config | exclude !'
-    elif host.ios_type == 'cisco_ios' or host.ios_type == 'cisco_asa':
-      command = "show running-config"
-    else:
-      command = "show running-config"
-
+    command = host.get_run_config_cmd()
+    
     hostConfig = getCmdOutput(activeSession, command)
 
     writeToLog('viewed running-config via button on host %s' % (host.hostname))
@@ -764,12 +759,7 @@ def modalCmdShowStartConfig(x):
 
     activeSession = retrieveSSHSession(host)
 
-    if host.ios_type == 'cisco_nxos':
-      command = 'show startup-config | exclude !'
-    elif host.ios_type == 'cisco_ios' or host.ios_type == 'cisco_asa':
-      command = "show startup-config"
-    else:
-      command = "show startup-config"
+    command = host.get_run_config_cmd()
 
     hostConfig = getCmdOutput(activeSession, command)
 
@@ -788,7 +778,7 @@ def modalCmdShowCDPNeigh(x):
 
     activeSession = retrieveSSHSession(host)
 
-    command = "show cdp neighbors | begin ID"
+    command = host.get_cdp_neighbor_cmd()
 
     hostConfig = getCmdOutputWithCommas(activeSession, command)
 
