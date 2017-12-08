@@ -11,37 +11,43 @@ class BaseDevice(object):
 		self.ipv4_addr = ipv4_addr
 		self.type = type
 		self.ios_type = ios_type
-		self.activesession = self.retrieve_ssh_session()
+		self.activeSession = self.retrieve_ssh_session()
 		self.interface = ''
 
 	def return_stored_ssh(self):
 		return ssh
 
+	def enter_config_mode(self):
+		self.activeSession.config_mode()
+
+	def exit_config_mode(self):
+		self.activeSession.exit_config_mode()
+
 	def run_ssh_command(self, command):
-		return nfn.runSSHCommandInSession(command, self.activesession)
+		return nfn.runSSHCommandInSession(command, self.activeSession)
 
 	def run_ssh_config_commands(self, commands):
-		return nfn.runMultipleSSHConfigCommandsInSession(commands, self.activesession)
+		return nfn.runMultipleSSHConfigCommandsInSession(commands, self.activeSession)
 
 	def run_multiple_commands(self, command):
 		newCmd = []
 		for x in self.split_on_newline(command):
 			newCmd.append(x)
-		result = nfn.runMultipleSSHCommandsInSession(newCmd, self.activesession)
+		result = nfn.runMultipleSSHCommandsInSession(newCmd, self.activeSession)
 
 	def run_multiple_config_commands(self, command):
 		newCmd = []
 		for x in self.split_on_newline(command):
 			newCmd.append(x)
 		# Get command output from network device
-		result = nfn.runMultipleSSHConfigCommandsInSession(newCmd, self.activesession)
+		result = nfn.runMultipleSSHConfigCommandsInSession(newCmd, self.activeSession)
 		saveResult = self.save_config_on_device()
 		for x in saveResult:
 			result.append(x)
 		return result
 
-	def split_on_newline(self, output):
-		return output.split('\n')
+	def split_on_newline(self, x):
+		return fn.splitOnNewline(x)
 
 	def replace_double_spaces_commas(self, x):
 		return fn.replaceDoubleSpacesCommas(x)

@@ -655,15 +655,9 @@ def modalInterfaceInfo(x, y):
 @app.route('/modalcmdshowrunconfig/<x>', methods=['GET', 'POST'])
 def modalCmdShowRunConfig(x):
     initialChecks()
-
+    # x = device id
     host = db_modifyDatabase.getHostByID(x)
-
-    activeSession = retrieveSSHSession(host)
-
-    command = host.get_run_config_cmd()
-
-    hostConfig = getCmdOutput(activeSession, command)
-
+    hostConfig = host.pull_run_config()
     writeToLog('viewed running-config via button on host %s' % (host.hostname))
     return render_template("/cmdshowrunconfig.html",
                            host=host,
@@ -676,13 +670,7 @@ def modalCmdShowStartConfig(x):
     initialChecks()
     # x = device id
     host = db_modifyDatabase.getHostByID(x)
-
-    activeSession = retrieveSSHSession(host)
-
-    command = host.get_run_config_cmd()
-
-    hostConfig = getCmdOutput(activeSession, command)
-
+    hostConfig = host.pull_start_config()
     writeToLog('viewed startup-config via button on host %s' % (host.hostname))
     return render_template("/cmdshowstartconfig.html",
                            host=host,
@@ -695,17 +683,11 @@ def modalCmdShowCDPNeigh(x):
     initialChecks()
     # x = device id
     host = db_modifyDatabase.getHostByID(x)
-
-    activeSession = retrieveSSHSession(host)
-
-    command = host.get_cdp_neighbor_cmd()
-
-    hostConfig = getCmdOutputWithCommas(activeSession, command)
-
+    result = host.pull_cdp_neighbor()
     writeToLog('viewed CDP neighbors via button on host %s' % (host.hostname))
     return render_template("/cmdshowcdpneigh.html",
                            host=host,
-                           hostConfig=hostConfig)
+                           result=result)
 
 # To show inventory on host
 @app.route('/modalcmdshowinventory/', methods=['GET', 'POST'])
@@ -714,12 +696,7 @@ def modalCmdShowInventory(x):
     initialChecks()
     # x = device id
     host = db_modifyDatabase.getHostByID(x)
-
-    activeSession = retrieveSSHSession(host)
-
-    command = "show inventory"
-
-    result = getCmdOutput(activeSession, command)
+    result = host.pull_inventory()
 
     writeToLog('viewed inventory info via button on host %s' % (host.hostname))
     return render_template("/cmdshowinventory.html",
@@ -733,12 +710,7 @@ def modalCmdShowVersion(x):
     initialChecks()
     # x = device id
     host = db_modifyDatabase.getHostByID(x)
-
-    activeSession = retrieveSSHSession(host)
-
-    command = "show version"
-
-    result = getCmdOutput(activeSession, command)
+    result = host.pull_version()
 
     writeToLog('viewed version info via button on host %s' % (host.hostname))
     return render_template("/cmdshowversion.html",
@@ -774,16 +746,12 @@ def modalCfgCmdCustom(x):
                            form=form)
 
 # To save running config on host
-#@app.route('/modalcmdsaveconfig/', methods=['GET', 'POST'])
 @app.route('/modalcmdsaveconfig/<x>', methods=['GET', 'POST'])
 def modalCmdSaveConfig(x):
     initialChecks()
-
+    # x = device id
     host = db_modifyDatabase.getHostByID(x)
-
-    activeSession = retrieveSSHSession(host)
-
-    hostConfig = saveConfigOnSession(activeSession, host)
+    result = host.save_config_on_device()
 
     writeToLog('saved config via button on host %s' % (host.hostname))
     return render_template("/cmdsaveconfig.html",
@@ -805,23 +773,22 @@ def hostShell(x):
 
 # To run a command via an interactive shell on host
 @app.route('/hostshelloutput/<x>/<m>/<y>', methods=['GET', 'POST'])
-def hostShellOutput(x, m, y):
+def hostShellOutput(x, m, y): # NEED TO CLEANUP ddddd
     initialChecks()
     output = []
     configError = False
 
     # x = device id, m = config or enable mode, y = encoded commands from javascript
     host = db_modifyDatabase.getHostByID(x)
-
-    activeSession = retrieveSSHSession(host)
     
+    # Decode command in URL received from javascript
     command = unquote_plus(y).decode('utf-8')
 
     # Replace '_' with '/'
     command = interfaceReplaceSlash(command)
 
     # Append prompt and command executed to beginning of output
-    output.append(findPromptInSession(activeSession) + command)
+    output.append(findPromptInSession(host.activeSession) + command)
 
     # Check if last character is a '?'
     if command[-1] == '?':
@@ -832,22 +799,19 @@ def hostShellOutput(x, m, y):
       else:
         # Get command output as a list.  Insert list contents into 'output' list
         #output.extend(getCmdOutput(activeSession, command))
-        output.extend(getCmdOutputNoCR(activeSession, command))
+        output.extend(getCmdOutputNoCR(host.activeSession, command))
         # Append prompt and command executed to end of output
-        output.append(findPromptInSession(activeSession))
+        output.append(findPromptInSession(host.activeSession))
       
     else:
       if m == 'c':
         # Get command output as a list.  Insert list contents into 'output' list
-        output.extend(getCfgCmdOutput(activeSession, command))
+        output.extend(getCfgCmdOutput(host.activeSession, command))
       else:
         # Get command output as a list.  Insert list contents into 'output' list
-        output.extend(getCmdOutput(activeSession, command))
+        output.extend(getCmdOutput(host.activeSession, command))
         # Append prompt and command executed to end of output
-        output.append(findPromptInSession(activeSession))
-
-    # Append prompt and command executed to beginning of output
-    #output.insert(0,findPromptInSession(activeSession) + command)
+        output.append(findPromptInSession(host.activeSession))
 
     writeToLog('ran command on host %s - %s' % (host.hostname, command))
 
@@ -861,16 +825,11 @@ def hostShellOutput(x, m, y):
 @app.route('/enterconfigmode/<x>', methods=['GET', 'POST'])
 def enterConfigMode(x):
   initialChecks()
-  
   # x = device id
   host = db_modifyDatabase.getHostByID(x)
-
-  activeSession = retrieveSSHSession(host)
-  
-  enterConfigModeInSession(activeSession)
-  
+  host.enter_config_mode()
+    
   writeToLog('entered config mode via iShell on host %s' % (host.hostname))
-  
   return ('', 204)
 
 # Exits config mode on host
@@ -880,147 +839,37 @@ def exitConfigMode(x):
 
   # x = device id
   host = db_modifyDatabase.getHostByID(x)
-
-  activeSession = retrieveSSHSession(host)
-
-  exitConfigModeInSession(activeSession)
+  host.exit_config_mode()
 
   writeToLog('exited config mode via iShell on host %s' % (host.hostname))
-
   return ('', 204)
-  
-
-##########################
-# Firewall ACL Generator #
-##########################
-
-@app.route('/fwaclgenerator', methods=['GET'])
-def fwACLGenerator():
-    hosts = db_modifyDatabase.getHostsByIOSType('cisco_asa')
-    # Need to add support for above line for Netbox database.  currently only supports local
-    form = FWACLGeneratorForm()
-    form.hostname.query = hosts
-    
-    return render_template('/fwaclgenerator.html',
-                           title='Generate ACL Config for Firewall',
-                           form=form)
-
-@app.route('/fwcheckopenports', methods=['GET'])
-def fwCheckOpenPorts():
-    hosts = db_modifyDatabase.getHostsByIOSType('cisco_asa')
-    # Need to add support for above line for Netbox database.  currently only supports local
-    form = FWCheckOpenPortsForm()
-    form.hostname.query = hosts
-    
-    return render_template('/fwcheckopenports.html',
-                           title='Check for Access Through Firewall',
-                           form=form)
-
-@app.route('/confirm/confirmfwaclconfig', methods=['GET', 'POST'])
-def confirmFWACLConfig():
-    #host = db_modifyDatabase.getHostByID(request.form['hostname'])
-    #changeTicket = request.form['changeTicket']
-    #changeDesc = request.form['changeDesc']
-    #sourceIP = request.form['sourceIP']
-    #destIP = request.form['destIP']
-    #ports = request.form['ports']
-
-    host = db_modifyDatabase.getHostByID(request.form['hostname'])
-    session['HOSTNAME'] = host.hostname
-    session['HOSTID'] = host.id
-    session['CHANGETICKET'] = request.form['changeTicket']
-    session['CHANGEDESC'] = request.form['changeDesc']
-    session['SOURCEIP'] = request.form['sourceIP']
-    session['DESTIP'] = request.form['destIP']
-    session['PORTS'] = request.form['ports']
-
-    return render_template("confirm/confirmfwaclconfig.html")
-
-@app.route('/results/resultsfwaclgenerator', methods=['GET', 'POST'])
-def resultsFWACLGenerator():
-    try:
-      host = db_modifyDatabase.getHostByID(session['HOSTID'])
-    except:
-      return redirect('/fwaclgenerator')
-
-    changeTicket = session['CHANGETICKET']
-    changeDesc = session['CHANGEDESC']
-    sourceIP = session['SOURCEIP']
-    destIP = session['DESTIP']
-    ports = session['PORTS']
-
-    resultStatus, configList, backoutList, allAccessAllowed = fop.main(host, changeTicket, changeDesc, sourceIP, destIP, ports)
-
-    session.pop('HOSTNAME', None)
-    session.pop('HOSTID', None)
-    session.pop('CHANGETICKET', None)
-    session.pop('CHANGEDESC', None)
-    session.pop('SOURCEIP', None)
-    session.pop('DESTIP', None)
-    session.pop('PORTS', None)
-
-    return render_template("results/resultsfwaclgenerator.html",
-                            resultStatus=resultStatus,
-                            configList=configList,
-                            backoutList=backoutList,
-                            allAccessAllowed=allAccessAllowed)
-
-@app.route('/results/resultfwcheckopenports', methods=['GET', 'POST'])
-def resultsFWCheckOpenPorts():
-    try:
-      host = db_modifyDatabase.getHostByID(request.form['hostname'])
-    except:
-      return redirect('/fwcheckopenports')
-
-    sourceIP = request.form['sourceIP']
-    destIP = request.form['destIP']
-    port = request.form['port']
-    protocol = request.form['protocol']
-
-    activeSession = retrieveSSHSession(host)
-    iface = getSourceInterfaceForHost(activeSession, sourceIP)
-
-    status = checkAccessThroughACL(iface, sourceIP, destIP, port, protocol, activeSession)
-
-    return render_template("results/resultsfwcheckopenports.html",
-                            status=status[0])
-
 
 
 #######################################
 # Begin Multiple Interface Selections #
 #######################################
 
-#@app.route('/confirm/confirmmultipleintenable/', methods=['GET', 'POST'])
 @app.route('/confirm/confirmmultipleintenable/<x>/<y>', methods=['GET', 'POST'])
 def confirmMultiIntEnable(x, y):
-    # x = device id
-    # y = interfaces separated by '&' in front of each interface name
-    #y = interfaceReplaceSlash(y)
+    # x = device id, y = interfaces separated by '&' in front of each interface name
     host = db_modifyDatabase.getHostByID(x)
     return render_template("confirm/confirmmultipleintenable.html",
                            hostid=x,
                            interfaces=y,
                            host=host)
 
-#@app.route('/confirm/confirmmultipleintdisable/', methods=['GET', 'POST'])
 @app.route('/confirm/confirmmultipleintdisable/<x>/<y>', methods=['GET', 'POST'])
 def confirmMultiIntDisable(x, y):
-    # x = device id
-    # y = interfaces separated by '&' in front of each interface name
-    #y = interfaceReplaceSlash(y)
+    # x = device id, y = interfaces separated by '&' in front of each interface name
     host = db_modifyDatabase.getHostByID(x)
     return render_template("confirm/confirmmultipleintdisable.html",
                            hostid=x,
                            interfaces=y,
                            host=host)
 ### WIP ###
-#@app.route('/confirm/confirmmultipleintedit/', methods=['GET', 'POST'])
 @app.route('/confirm/confirmmultipleintedit/<x>/<y>', methods=['GET', 'POST'])
 def confirmMultiIntEdit(x, y):
-    # x = device id
-    # y = interfaces separated by '&' in front of each interface name
-    #y = interfaceReplaceSlash(y)
+    # x = device id, y = interfaces separated by '&' in front of each interface name
     host = db_modifyDatabase.getHostByID(x)
     return render_template("confirm/confirmmultipleintedit.html",
                            hostid=x,
@@ -1032,21 +881,19 @@ def confirmMultiIntEdit(x, y):
 @app.route('/results/resultsmultipleintenabled/<x>/<y>', methods=['GET', 'POST'])
 def resultsMultiIntEnabled(x, y):
     initialChecks()
-    result = []
-    # x = device id
-    # y = interfaces separated by '&' in front of each interface name
+    # x = device id, y = interfaces separated by '&' in front of each interface name
     host = db_modifyDatabase.getHostByID(x)
 
-    activeSession = retrieveSSHSession(host)
-
+    result = []
     # Split by interfaces, separated by '&'
     for a in y.split('&'):
+      # a = interface
       if a:
         # Removes dashes from interface in URL
         a = interfaceReplaceSlash(a)
-        result.append(ci.enableInterface(activeSession, a))
+        result.append(host.run_enable_interface_cmd(a))
 
-    result.append(saveConfigOnSession(activeSession, host))
+    result.append(host.save_config_on_device())
 
     writeToLog('enabled multiple interfaces on host %s' % (host.hostname))
     return render_template("results/resultsmultipleintenabled.html",
@@ -1058,21 +905,18 @@ def resultsMultiIntEnabled(x, y):
 @app.route('/results/resultsmultipleintdisabled/<x>/<y>', methods=['GET', 'POST'])
 def resultsMultiIntDisabled(x, y):
     initialChecks()
-    result = []
-    # x = device id
-    # y = interfaces separated by '&' in front of each interface name
+    # x = device id, y = interfaces separated by '&' in front of each interface name
     host = db_modifyDatabase.getHostByID(x)
 
-    activeSession = retrieveSSHSession(host)
-
+    result = []
     # Split by interfaces, separated by '&'
     for a in y.split('&'):
       if a:
         # Removes dashes from interface in URL
         a = interfaceReplaceSlash(a)
-        result.append(ci.disableInterface(activeSession, a))
+        result.append(host.run_disable_interface_cmd(a))
 
-    result.append(saveConfigOnSession(activeSession, host))
+    result.append(host.save_config_on_device())
 
     writeToLog('disabled multiple interfaces on host %s' % (host.hostname))
     return render_template("results/resultsmultipleintdisabled.html",
@@ -1084,13 +928,10 @@ def resultsMultiIntDisabled(x, y):
 @app.route('/results/resultsmultipleintedit/<x>/<y>', methods=['GET', 'POST'])
 def resultsMultiIntEdit(x, y):
     initialChecks()
-    result = []
-    # x = device id
-    # y = interfaces separated by '&' in front of each interface name
+    # x = device id, y = interfaces separated by '&' in front of each interface name
     host = db_modifyDatabase.getHostByID(x)
 
-    activeSession = retrieveSSHSession(host)
-
+    result = []
     # Split by interfaces, separated by '&'
     for a in y.split('&'):
       if a:
@@ -1098,7 +939,7 @@ def resultsMultiIntEdit(x, y):
         a = interfaceReplaceSlash(a)
         #result.append(ci.editInterface(activeSession, a, datavlan, voicevlan, other, host))
 
-    result.append(saveConfigOnSession(activeSession, host))
+    result.append(host.save_config_on_device())
 
     writeToLog('edited multiple interfaces on host %s' % (host.hostname))
     return render_template("results/resultsmultipleintedit.html",

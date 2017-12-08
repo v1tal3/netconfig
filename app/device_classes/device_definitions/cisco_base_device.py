@@ -68,9 +68,8 @@ class CiscoBaseDevice(BaseDevice):
 			return "wr mem"
 
 	def save_config_on_device(self): #required
-		output = []
 		command = self.get_save_config_cmd()
-		return self.split_on_newline(nfn.runSSHCommandInSession(command, self.activesession))
+		return self.split_on_newline(nfn.runSSHCommandInSession(command, self.activeSession))
 
 	def run_edit_interface_cmd(self, interface, datavlan, voicevlan, other):
 		cmdList=[]
@@ -92,4 +91,21 @@ class CiscoBaseDevice(BaseDevice):
 		cmdList.append(self.get_save_config_cmd())
 		
 		return self.run_ssh_config_commands(cmdList)
+
+	def cmd_show_inventory(self):
+		command = 'show inventory'
+		return command
+
+	def cmd_show_version(self):
+		command = 'show version'
+		return command
+
+	def pull_inventory(self): #required
+		command = self.cmd_show_inventory()
+		return self.split_on_newline(self.run_ssh_command(command))
+
+	def pull_inventory(self): #required
+		command = self.cmd_show_version()
+		return self.split_on_newline(self.run_ssh_command(command))
+
 

@@ -21,7 +21,7 @@ def saveConfigOnSession(ssh, host):
 	return output
 
 # Enter 'configuration terminal' from host by provided IP address
-def enterConfigModeInSession(ssh):
+def enterConfigModeInSession(ssh): # THIS GOES AWAY
 	output = []
 
 	# Get output from network device when entering config mode
@@ -34,7 +34,7 @@ def enterConfigModeInSession(ssh):
 	return output
 
 # Enter 'configuration terminal' from host by provided IP address
-def exitConfigModeInSession(ssh):
+def exitConfigModeInSession(ssh): # THIS GOES AWAY
 	output = []
 
 	# Get output from network device when exiting config mode

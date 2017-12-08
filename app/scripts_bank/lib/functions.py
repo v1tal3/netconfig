@@ -134,6 +134,11 @@ def stripAllAfterChar(x, y):
 	x = x.split(y, 1)[0]
 	return x
 
+# Splits string on newline, returns as array
+def splitOnNewline(x)
+	x = x.split('\n')
+	return x
+
 # Returns index of -1 or -2, as IOS-XE/NX-OS has a trailing whitespace at the end of strings
 # This helps determine if a string came from IOS or IOS-XE/NX-OS
 def indexLookup(x):

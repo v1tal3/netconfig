@@ -7,7 +7,7 @@
 					<h2 class="text-primary">CDP Neighbors for {{ host.hostname }}:</h2><br /><br />
 					<p>
 						{% autoescape false %}
-						{% for line in hostConfig %}
+						{% for line in result %}
 							{% if ',' not in line %}
 								{% if field1.append(line) %}{% endif %}
 							{% else %}

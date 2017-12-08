@@ -6,17 +6,29 @@ from StringIO import StringIO
 
 class CiscoNXOS(CiscoBaseDevice):
 
-	def get_run_config_cmd(self):
+	def cmd_run_config(self):
 		command = 'show running-config | exclude !'
 		return command
 
-	def get_start_config_cmd(self):
+	def cmd_start_config(self):
 		command = 'show startup-config | exclude !'
 		return command
 
-	def get_cdp_neighbor_cmd(self):
+	def cmd_cdp_neighbor(self):
 		command = 'show cdp neighbors | begin ID'
 		return command
+
+	def pull_run_config(self): #required
+		command = self.cmd_run_config()
+		return self.split_on_newline(self.run_ssh_command(command))
+
+	def pull_start_config(self): #required
+		command = self.cmd_start_config()
+		return self.split_on_newline(self.run_ssh_command(command))
+
+	def pull_cdp_neighbor(self): #required
+		command = self.cmd_cdp_neighbor()
+		return self.split_on_newline(self.run_ssh_command(command))
 
 	def pull_interface_config(self):
 		command = "show run interface %s | exclude version | exclude Command | exclude !" % (self.interface)
