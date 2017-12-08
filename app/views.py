@@ -18,12 +18,13 @@ import logging
 from scripts_bank import netboxAPI
 from redis import StrictRedis # http://blog.hackerearth.com/twitter-client-using-flask-redis
 from uuid import uuid4
+from device_classes.device_definitions.base_device import BaseDevice
 
 # Gets page referrer
 # referrer = request.headers.get("Referer")
 
 # Global Variables #
-ssh = {}
+ssh = {} # THIS GOES AWAY
 
 ###################
 # Logging - Begin #
@@ -76,7 +77,7 @@ def initialChecks():
                               title='Home')
 
 # Returns active SSH session for provided host if it exists.  Otherwise gets a session, stores it, and returns it
-def retrieveSSHSession(host):
+def retrieveSSHSession(host): # THIS GOES AWAY
     global ssh
 
     user_id = str(g.db.hget('users', session['USER']))
@@ -90,14 +91,6 @@ def retrieveSSHSession(host):
       # If no currently active SSH sessions, initiate a new one
       ssh[sshKey] = getSSHSession(host.ios_type, host.ipv4_addr, creds)
     
-    ### This worked but slowed down iShell commands by at least .63 seconds
-    ### New method below is much faster (1.87s std command execution vs. 1.24s)
-    #try:
-    #  ssh[sshKey].send_command(' ')
-    #except:
-    #  writeToLog('reestablished SSH connection to %s' % (host.hostname))
-    #  ssh[sshKey] = getSSHSession(host.ios_type, host.ipv4_addr, creds)
-
     # Run test to verify if socket connection is still open or not
     if not sessionIsAlive(ssh[sshKey]):
       # If session is closed, reestablish session and log event
@@ -108,39 +101,33 @@ def retrieveSSHSession(host):
 
 # Disconnect any SSH sessions for a specific host from all users
 def disconnectSpecificSSHSession(host):
-    global ssh
-
-    for x in ssh:
+    for x in BaseDevice.ssh:
       # x is id-uuid
       y = x.split('--')
       # y[0] is host id, y[1] is uuid
       if int(y[0]) == int(host.id):
-        disconnectFromSSH(ssh[x])
-        ssh = fn.removeDictKey(ssh, x)
+        disconnectFromSSH(BaseDevice.ssh[x])
+        ssh = fn.removeDictKey(BaseDevice.ssh, x)
         writeToLog('disconnected SSH session to provided host %s from user %s' % (host.hostname, session['USER']))
 
 # Disconnect all remaining active SSH sessions tied to a user
 def disconnectAllSSHSessions():
-    global ssh
-
-    for x in ssh:
+    for x in BaseDevice.ssh:
       # x is id-uuid
       y = x.split('--')
       # y[0] is host id, y[1] is uuid
       if y[1] == session['UUID']:
-        disconnectFromSSH(ssh[x])
         host = db_modifyDatabase.getHostByID(y[0])
-        ssh = fn.removeDictKey(ssh, x)
+        disconnectFromSSH(BaseDevice.ssh[x])
+        ssh = fn.removeDictKey(BaseDevice.ssh, x)
         writeToLog('disconnected SSH session to device %s for user %s' % (host.hostname, session['USER']))
     
     writeToLog('disconnected all SSH sessions for user %s' % (session['USER']))
 
 # Returns number of active SSH sessions tied to user
 def countAllSSHSessions():
-    global ssh
-
     i = 0
-    for x in ssh:
+    for x in BaseDevice.ssh:
         # x is id-uuid
         y = x.split('--')
         # y[0] is host id, y[1] is uuid
@@ -349,22 +336,7 @@ def deviceUptime(x):
     # x = host id
     initialChecks()
     host = db_modifyDatabase.getHostByID(x)
-    activeSession = retrieveSSHSession(host)
-    if host.ios_type == 'cisco_asa':
-      command = 'show version | include up'
-    else:
-      command = 'show version | include uptime'
-    uptime = getCmdOutput(activeSession, command)
-    if host.ios_type == 'cisco_asa':
-      for a in uptime:
-        if 'failover' in a:
-          break
-        else:
-          uptimeOutput = a.split(' ', 2)[-1]
-    else:
-      for a in uptime:
-        uptimeOutput = a.split(' ', 3)[-1]
-    return jsonify(uptimeOutput) 
+    return jsonify(host.pull_device_uptime())
 
 # To show hosts from database
 @app.route('/db/viewhosts/<x>', methods=['GET'])
@@ -382,40 +354,13 @@ def viewSpecificHost(x):
     host = db_modifyDatabase.getHostByID(x)
     writeToLog('accessed host %s' % (host.hostname))
 
-    # Get any existing SSH sessions
-    activeSession = retrieveSSHSession(host)
-    
-    if host.ios_type == 'cisco_nxos':
-      interfaces = phi.pullHostInterfacesNXOS(host.ipv4_addr, activeSession)
-      #uptime = getCmdOutput(host.ipv4_addr, host.ios_type, 'show version | include uptime')
-      #for x in uptime:
-      #  uptimeOutput = x.split(' ', 3)[-1]
+    interfaces = host.pull_host_interfaces()
+    if interfaces:
+      upInt, downInt, disabledInt, totalInt = host.count_interface_status(interfaces)
 
-    elif host.ios_type == 'cisco_ios' or host.ios_type == 'cisco_iosxe':
-      interfaces = phi.pullHostInterfacesIOS(host.ipv4_addr, activeSession)
-      #uptime = getCmdOutput(host.ipv4_addr, host.ios_type, 'show version | include uptime')
-      #for x in uptime:
-      #  uptimeOutput = x.split(' ', 3)[-1]
-
-    elif host.ios_type == 'cisco_asa':
-      interfaces = phi.pullHostInterfacesASA(host.ipv4_addr, activeSession)
-      #uptime = getCmdOutput(host.ipv4_addr, host.ios_type, 'show version | include up ')
-      #for x in uptime:
-      #  if 'failover' in x:
-      #    break
-      #  else:
-      #    uptimeOutput = x.split(' ', 2)[-1]
-    
-    upInt, downInt, disabledInt, totalInt = phi.countInterfaceStatus(interfaces, host.ios_type)
-
-    
     # if interfaces is x.x.x.x skipped - connection timeout, throw error page redirect
-    if fn.containsSkipped(interfaces):
-        disconnectFromSSH(ssh[sshKey])
-        return redirect(url_for('noHostConnectError',
-                                host=host.hostname))
-    elif not interfaces:
-        disconnectFromSSH(ssh[sshKey])
+    if fn.containsSkipped(interfaces) or not interfaces:
+        disconnectSpecificSSHSession(host)
         return redirect(url_for('noHostConnectError',
                                 host=host.hostname))
     else:
@@ -531,11 +476,9 @@ def resultsIntEnabled(x, y):
     # x = device id, y = interface name
     host = db_modifyDatabase.getHostByID(x)
 
-    activeSession = retrieveSSHSession(host)
+    # Removes dashes from interface in URL and enabel interface
+    result = host.run_enable_interface_cmd(interfaceReplaceSlash(y))
 
-    # Removes dashes from interface in URL
-    y = interfaceReplaceSlash(y)
-    result = ci.enableInterface(activeSession, y)
     writeToLog('enabled interface %s on host %s' % (y, host.hostname))
     return render_template("results/resultsinterfaceenabled.html",
                            host=host,
@@ -549,11 +492,9 @@ def resultsIntDisabled(x, y):
     # x = device id, y = interface name
     host = db_modifyDatabase.getHostByID(x)
 
-    activeSession = retrieveSSHSession(host)
+    # Removes dashes from interface in URL and disable interface
+    result = host.run_disable_interface_cmd(interfaceReplaceSlash(y))
 
-    # Removes dashes from interface in URL
-    y = interfaceReplaceSlash(y)
-    result = ci.disableInterface(activeSession, y)
     writeToLog('disabled interface %s on host %s' % (y, host.hostname))
     return render_template("results/resultsinterfacedisabled.html",
                            host=host,
@@ -567,11 +508,9 @@ def resultsIntEdit(x, y, datavlan, voicevlan, other):
     # x = device id, y = interface name, d = data vlan, v = voice vlan, o = other
     host = db_modifyDatabase.getHostByID(x)
 
-    activeSession = retrieveSSHSession(host)
+    # Remove dashes from interface in URL and edit interface config
+    result = host.run_edit_interface_cmd(interfaceReplaceSlash(y), datavlan, voicevlan, other)
 
-    # Removes dashes from interface in URL
-    y = interfaceReplaceSlash(y)
-    result = ci.editInterface(activeSession, y, datavlan, voicevlan, other, host)
     writeToLog('edited interface %s on host %s' % (y, host.hostname))
     return render_template("results/resultsinterfaceedit.html",
                            host=host,
@@ -653,34 +592,13 @@ def modalSpecificInterfaceOnHost(x, y):
     # x = device id, y = interface name
     host = db_modifyDatabase.getHostByID(x)
 
-    #activeSession = retrieveSSHSession(host)
-    #host.activesession = retrieveSSHSession(host)
-
     # Removes dashes from interface in URL, replacing '_' with '/'
     interface = interfaceReplaceSlash(y)
     # Replace's '_' with '.'
     host.interface = interface.replace('=', '.')
 
     intConfig, intMac, intStats = host.pull_interface_info()
-    #intConfig = host.pull_interface_info(activeSession, interface, host)
-    #intMac = host.pull_interface_mac(activeSession, interface, host)
-    #intStats = host.pull_interface_stats(activeSession, interface, host)
     macToIP = ''
-    '''
-    if host.ios_type == 'cisco_ios':
-      intConfig, intMac = phi.pullInterfaceInfo(activeSession, interface, host)
-      intStats = phi.pullInterfaceStats(activeSession, interface, host)
-      macToIP = ''
-    elif host.ios_type == 'cisco_nxos':
-      intConfig, intMac = phi.pullInterfaceInfo(activeSession, interface, host)
-      intStats = phi.pullInterfaceStats(activeSession, interface, host)
-      macToIP = ''
-    else:
-      intConfig = phi.pullInterfaceConfigSession(activeSession, interface, host)
-      intMac = ''
-      macToIP = ''
-      intStats = ''
-    '''
     writeToLog('viewed interface %s on host %s' % (interface, host.hostname))
     return render_template("/viewspecificinterfaceonhost.html",
                            host=host,

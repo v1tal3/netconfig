@@ -524,14 +524,6 @@ def isHostIOSorNXOS(host):
 	else:
 		return "Inc"
 '''
-# Returns the correct command for saving the running-config on the host, as NX-OS does not support the "wr mem" command
-def returnSaveConfigCommand(host):
-	if host.ios_type == 'cisco_nxos':
-		return "copy running-config startup-config"
-	elif host.ios_type == 'cisco_ios' or host.ios_type == 'cisco_asa' or host.ios_type == 'cisco_xe':
-		return "wr mem"
-	else:
-		return "wr mem"
 
 # Return true if verification succeeds, otherwise return false
 def md5VerifyOnDeviceWithSession(command, child):

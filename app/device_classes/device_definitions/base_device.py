@@ -14,8 +14,14 @@ class BaseDevice(object):
 		self.activesession = self.retrieve_ssh_session()
 		self.interface = ''
 
+	def return_stored_ssh(self):
+		return ssh
+
 	def run_ssh_command(self, command):
 		return nfn.runSSHCommandInSession(command, self.activesession)
+
+	def run_ssh_config_commands(self, commands):
+		return nfn.runMultipleSSHConfigCommandsInSession(commands, self.activesession)
 
 	def split_on_newline(self, output):
 		return output.split('\n')
@@ -23,7 +29,6 @@ class BaseDevice(object):
 	def replace_double_spaces_commas(self, x):
 		return fn.replaceDoubleSpacesCommas(x)
 
-	
 	# Returns active SSH session for provided host (self) if it exists.  Otherwise gets a session, stores it, and returns it
 	def retrieve_ssh_session(self):
 	    user_id = str(g.db.hget('users', session['USER']))

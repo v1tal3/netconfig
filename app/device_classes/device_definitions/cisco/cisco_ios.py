@@ -1,6 +1,6 @@
-from ..base_device import BaseDevice
+from ..cisco_base_device import CiscoBaseDevice
 
-class CiscoIOS(BaseDevice):
+class CiscoIOS(CiscoBaseDevice):
 
 	def get_run_config_cmd(self): #required
 		command = 'show running-config'
@@ -32,13 +32,6 @@ class CiscoIOS(BaseDevice):
 		else:
 			return self.split_on_newline(self.replace_double_spaces_commas(result).replace('*', ''))
 
-
-	def check_invalid_input_detected(self, x):
-		if "Invalid input detected" in x:
-			return True
-		else:
-			return False
-
 	def pull_interface_statistics(self):
 		command = "show interface %s" % (self.interface)
 		return self.split_on_newline(self.run_ssh_command(command))
@@ -49,5 +42,42 @@ class CiscoIOS(BaseDevice):
 		intStats = self.pull_interface_statistics()
 
 		return intConfig, intMac, intStats
+
+	def pull_device_uptime(self): #required
+		command = 'show version | include uptime'
+		uptime = self.split_on_newline(self.run_ssh_command(command))
+		for x in uptime:
+			output = x.split(' ', 3)[-1]
+		return output
+
+	def pull_host_interfaces(self): #required
+		command = "show ip interface brief"
+		result = self.run_ssh_command(command)
+		# Returns False if nothing was returned
+		if not result:
+			return result
+		return self.split_on_newline(self.cleanup_ios_output(result))
+
+	def count_interface_status(self, interfaces): #required
+		up = down = disabled = total = 0
+		for interface in interfaces:
+			if not 'Interface' in interface:
+				if 'administratively down,down' in interface:
+					disabled += 1
+				elif 'down,down' in interface:
+					down += 1
+				elif 'up,down' in interface:
+					down += 1
+				elif 'up,up' in interface:
+					up += 1
+				elif 'manual deleted' in interface:
+					total -= 1
+
+				total += 1
+
+		return up, down, disabled, total
+
+
+
 
 
