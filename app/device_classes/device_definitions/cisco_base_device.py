@@ -45,7 +45,7 @@ class CiscoBaseDevice(BaseDevice):
 		x = x.replace('linkFlapE ', 'linkFlapE,')
 		return x
 
-	def run_enable_interface_cmd(interface):
+	def run_enable_interface_cmd(self, interface):
 		cmdList = []
 		cmdList.append("interface %s" % interface)
 		cmdList.append("no shutdown")
@@ -53,7 +53,7 @@ class CiscoBaseDevice(BaseDevice):
 
 		return self.run_ssh_config_commands(cmdList)
 
-	def run_disable_interface_cmd(interface):
+	def run_disable_interface_cmd(self, interface):
 		cmdList = []
 		cmdList.append("interface %s" % interface)
 		cmdList.append("shutdown")
@@ -67,7 +67,12 @@ class CiscoBaseDevice(BaseDevice):
 		else:
 			return "wr mem"
 
-	def run_edit_interface_cmd(interface, datavlan, voicevlan, other):
+	def save_config_on_device(self): #required
+		output = []
+		command = self.get_save_config_cmd()
+		return self.split_on_newline(nfn.runSSHCommandInSession(command, self.activesession))
+
+	def run_edit_interface_cmd(self, interface, datavlan, voicevlan, other):
 		cmdList=[]
 		cmdList.append("interface %s" % iface)
 
@@ -87,5 +92,4 @@ class CiscoBaseDevice(BaseDevice):
 		cmdList.append(self.get_save_config_cmd())
 		
 		return self.run_ssh_config_commands(cmdList)
-
 

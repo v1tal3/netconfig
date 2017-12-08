@@ -542,11 +542,7 @@ def resultsCmdCustom():
     initialChecks()
     host = db_modifyDatabase.getHostByID(session['HOSTID'])
 
-    command = session['COMMAND']
-
-    activeSession = retrieveSSHSession(host)
-    
-    result = getMultiCmdOutput(activeSession, command, host)
+    result = host.run_multiple_commands(session['COMMAND'])
 
     session.pop('HOSTNAME', None)
     session.pop('COMMAND', None)
@@ -563,11 +559,7 @@ def resultsCfgCmdCustom():
     initialChecks()
     host = db_modifyDatabase.getHostByID(session['HOSTID'])
 
-    command = session['COMMAND']
-
-    activeSession = retrieveSSHSession(host)
-
-    result = getMultiConfigCmdOutput(activeSession, command, host)
+    result = host.run_multiple_config_commands(session['COMMAND'])
 
     session.pop('HOSTNAME', None)
     session.pop('COMMAND', None)

@@ -23,6 +23,23 @@ class BaseDevice(object):
 	def run_ssh_config_commands(self, commands):
 		return nfn.runMultipleSSHConfigCommandsInSession(commands, self.activesession)
 
+	def run_multiple_commands(self, command):
+		newCmd = []
+		for x in self.split_on_newline(command):
+			newCmd.append(x)
+		result = nfn.runMultipleSSHCommandsInSession(newCmd, self.activesession)
+
+	def run_multiple_config_commands(self, command):
+		newCmd = []
+		for x in self.split_on_newline(command):
+			newCmd.append(x)
+		# Get command output from network device
+		result = nfn.runMultipleSSHConfigCommandsInSession(newCmd, self.activesession)
+		saveResult = self.save_config_on_device()
+		for x in saveResult:
+			result.append(x)
+		return result
+
 	def split_on_newline(self, output):
 		return output.split('\n')
 
