@@ -27,6 +27,7 @@ ssh = {}
 
 ###################
 # Logging - Begin #
+# Plan to remove this logging section, and use it's relocated function in functions.py #
 ###################
 
 # Syslogging
@@ -41,10 +42,6 @@ handler.setFormatter(formatter)
 # Add the handlers to the logger
 logger.addHandler(handler)
 
-###################
-# Logging - End #
-###################
-
 
 def writeToLog(msg):
     # Local access.log
@@ -57,6 +54,10 @@ def writeToLog(msg):
     except:
       return render_template("index.html",
                               title='Home')
+
+###################
+# Logging - End #
+###################
 
 def resetUserRedisExpireTimer():
     # x is Redis key to reset timer on
@@ -82,7 +83,7 @@ def retrieveSSHSession(host):
     password = str(g.db.hget(str(user_id), 'pw'))
     creds = fn.setUserCredentials(session['USER'], password)
     # Store SSH Dict key as host.id followed by '-' followed by username
-    sshKey = str(host.id) + '--' + str(session['UUID']) # str(session['USER'])
+    sshKey = str(host.id) + '--' + str(session['UUID'])
     #if not ssh[sshKey]:
     if sshKey not in ssh:
       writeToLog('initiated new SSH connection to %s' % (host.hostname))
@@ -651,13 +652,21 @@ def modalSpecificInterfaceOnHost(x, y):
     initialChecks()
     # x = device id, y = interface name
     host = db_modifyDatabase.getHostByID(x)
+
+    #activeSession = retrieveSSHSession(host)
+    #host.activesession = retrieveSSHSession(host)
+
     # Removes dashes from interface in URL, replacing '_' with '/'
     interface = interfaceReplaceSlash(y)
     # Replace's '_' with '.'
-    interface = interface.replace('=', '.')
+    host.interface = interface.replace('=', '.')
 
-    activeSession = retrieveSSHSession(host)
-
+    intConfig, intMac, intStats = host.pull_interface_info()
+    #intConfig = host.pull_interface_info(activeSession, interface, host)
+    #intMac = host.pull_interface_mac(activeSession, interface, host)
+    #intStats = host.pull_interface_stats(activeSession, interface, host)
+    macToIP = ''
+    '''
     if host.ios_type == 'cisco_ios':
       intConfig, intMac = phi.pullInterfaceInfo(activeSession, interface, host)
       intStats = phi.pullInterfaceStats(activeSession, interface, host)
@@ -671,6 +680,7 @@ def modalSpecificInterfaceOnHost(x, y):
       intMac = ''
       macToIP = ''
       intStats = ''
+    '''
     writeToLog('viewed interface %s on host %s' % (interface, host.hostname))
     return render_template("/viewspecificinterfaceonhost.html",
                            host=host,
@@ -741,7 +751,7 @@ def modalCmdShowRunConfig(x):
     activeSession = retrieveSSHSession(host)
 
     command = host.get_run_config_cmd()
-    
+
     hostConfig = getCmdOutput(activeSession, command)
 
     writeToLog('viewed running-config via button on host %s' % (host.hostname))

@@ -5,7 +5,7 @@ from sqlalchemy import asc, desc, func
 from lib.ip_functions import validateIPAddress
 from lib.functions import stripNewline
 import netboxAPI
-import device_classes.deviceType as dt
+from ..device_classes import deviceType as dt
 
 
 # Adds host to Database
@@ -123,8 +123,6 @@ def getHostByID(x):
 
     # Get host class based on device type
     return dt.DeviceHandler(id=host.id, hostname=host.hostname, ipv4_addr=host.ipv4_addr, type=host.type, ios_type=host.ios_type)
-
-    #return host
 
 def getHostsByIOSType(x):
     hosts = models.Host.query.filter_by(ios_type=x)
