@@ -11,6 +11,18 @@ class CiscoBaseDevice(BaseDevice):
 		else:
 			return False
 
+	def get_cmd_enter_configuration_mode(self): #required
+		command = "config term"
+		return command
+
+	def get_cmd_enable_interface(self): #required
+		command = "no shutdown"
+		return command
+
+	def get_cmd_disable_interface(self): #required
+		command = "shutdown"
+		return command
+
 	def cleanup_ios_output(self, x):
 		x = x.replace('OK?', '')
 		x = x.replace('Method', '')
@@ -48,7 +60,7 @@ class CiscoBaseDevice(BaseDevice):
 	def run_enable_interface_cmd(self, interface):
 		cmdList = []
 		cmdList.append("interface %s" % interface)
-		cmdList.append("no shutdown")
+		cmdList.append("%s" % (self.get_cmd_enable_interface()))
 		cmdList.append("end")
 
 		return self.run_ssh_config_commands(cmdList)
@@ -56,7 +68,7 @@ class CiscoBaseDevice(BaseDevice):
 	def run_disable_interface_cmd(self, interface):
 		cmdList = []
 		cmdList.append("interface %s" % interface)
-		cmdList.append("shutdown")
+		cmdList.append("%s" % (self.get_cmd_disable_interface()))
 		cmdList.append("end")
 
 		return self.run_ssh_config_commands(cmdList)
@@ -73,7 +85,7 @@ class CiscoBaseDevice(BaseDevice):
 
 	def run_edit_interface_cmd(self, interface, datavlan, voicevlan, other):
 		cmdList=[]
-		cmdList.append("interface %s" % iface)
+		cmdList.append("interface %s" % interface)
 
 		if datavlan != '0':
 			cmdList.append("switchport access vlan %s" % datavlan)
@@ -89,7 +101,7 @@ class CiscoBaseDevice(BaseDevice):
 
 		cmdList.append("end")
 		cmdList.append(self.get_save_config_cmd())
-		
+
 		return self.run_ssh_config_commands(cmdList)
 
 	def cmd_show_inventory(self):

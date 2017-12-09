@@ -16,19 +16,19 @@ class CiscoASA(CiscoBaseDevice):
 
 	def pull_run_config(self): #required
 		command = self.cmd_run_config()
-		return self.split_on_newline(self.run_ssh_command(command))
+		return self.get_cmd_output(command)
 
 	def pull_start_config(self): #required
 		command = self.cmd_start_config()
-		return self.split_on_newline(self.run_ssh_command(command))
+		return self.get_cmd_output(command)
 
 	def pull_cdp_neighbor(self): #required
 		command = self.cmd_cdp_neighbor()
-		return self.split_on_newline(self.run_ssh_command(command))
+		return self.get_cmd_output(command)
 
 	def pull_interface_config(self):
 		command = "show run interface %s | exclude configuration|!" % (self.interface)
-		return self.split_on_newline(self.run_ssh_command(command))
+		return self.get_cmd_output(command)
 
 	# Not supported on ASA's
 	def pull_interface_mac_addresses(self):
@@ -36,7 +36,7 @@ class CiscoASA(CiscoBaseDevice):
 
 	def pull_interface_statistics(self):
 		command = "show interface %s" % (self.interface)
-		return self.split_on_newline(self.run_ssh_command(command))
+		return self.get_cmd_output(command)
 
 	def pull_interface_info(self):
 		intConfig = self.pull_interface_config()
@@ -47,7 +47,7 @@ class CiscoASA(CiscoBaseDevice):
 
 	def pull_device_uptime(self):
 		command = 'show version | include up'
-		uptime = self.split_on_newline(self.run_ssh_command(command))
+		return self.get_cmd_output(command)
 		for x in uptime:
 			if 'failover' in x:
 				break

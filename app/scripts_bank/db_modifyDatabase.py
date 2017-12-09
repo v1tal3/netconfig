@@ -94,19 +94,14 @@ def deleteHostInDB(x):
     
 
 def getHosts(page):
-    #hosts = models.Host.query.order_by(asc(models.Host.hostname)).all()
-    #hosts = models.Host.query.order_by(asc(models.Host.hostname)).paginate(page, POSTS_PER_PAGE, False).items
     hosts = models.Host.query.order_by(asc(models.Host.hostname)).paginate(page, app.config['POSTS_PER_PAGE'], False)
     return hosts
 
 def getHostsAll():
-    #hosts = models.Host.query.order_by(asc(models.Host.hostname)).all()
-    #hosts = models.Host.query.order_by(asc(models.Host.hostname)).paginate(page, POSTS_PER_PAGE, False).items
     hosts = models.Host.query.all()
     return hosts
 
 def getHostByHostname(x):
-    #host = models.Host.query.filter_by(hostname=x).first()  <-- this is case sesnsitve
     host = models.Host.query.filter(func.lower(models.Host.hostname) == func.lower(x)).first() # <-- not case sensitve
     return host
 
@@ -142,6 +137,18 @@ def editHostInDatabase(host, hostname, ipv4_addr, hosttype, ios_type):
         return True
     except:
         return False
+
+# Return True if provided host IP address is in database, False if not
+# Also returns hostname of device
+def searchHostInDB(x):
+    try:
+        host = models.Host.query.filter_by(ipv4_addr=x).first()
+        if host:
+            return True, host.hostname
+        else:
+            return False, ''
+    except:
+        return False, ''
 '''
 def editInterface(host, iface, datavlan, voicevlan, other):
     cmdList=[]
@@ -164,18 +171,8 @@ def editInterface(host, iface, datavlan, voicevlan, other):
     
     return executeSSHCmdsViaNFN(host, cmdList)
 '''
-# Return True if provided host IP address is in database, False if not
-# Also returns hostname of device
-def searchHostInDB(x):
-    try:
-        host = models.Host.query.filter_by(ipv4_addr=x).first()
-        if host:
-            return True, host.hostname
-        else:
-            return False, ''
-    except:
-        return False, ''
 
+'''
 # Sessions
 def addSessionToDB(ssh_session, hostID):
     try:
@@ -205,3 +202,4 @@ def addSessionToDB(ssh_session, hostID):
 def getSessionInDB(x):
     session = models.Session.query.filter_by(id=x).first()
     return session
+'''

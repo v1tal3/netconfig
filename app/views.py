@@ -11,7 +11,7 @@ from scripts_bank.lib.fw_functions import checkAccessThroughACL, getSourceInterf
 from scripts_bank import db_modifyDatabase
 #from scripts_bank import firewall_open_ports as fop
 from scripts_bank.lib.flask_functions import checkUserLoggedInStatus, checkSSHSessionMatchesID
-from scripts_bank.lib.netmiko_functions import getSSHSession, disconnectFromSSH, findPromptInSession, sessionIsAlive
+from scripts_bank.lib.netmiko_functions import getSSHSession, disconnectFromSSH, sessionIsAlive
 from datetime import timedelta
 from urllib import unquote_plus
 import logging
@@ -42,7 +42,6 @@ formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s', '%Y-%
 handler.setFormatter(formatter)
 # Add the handlers to the logger
 logger.addHandler(handler)
-
 
 def writeToLog(msg):
     # Local access.log
@@ -113,14 +112,14 @@ def disconnectSpecificSSHSession(host):
 # Disconnect all remaining active SSH sessions tied to a user
 def disconnectAllSSHSessions():
     for x in BaseDevice.ssh:
-      # x is id-uuid
-      y = x.split('--')
-      # y[0] is host id, y[1] is uuid
-      if y[1] == session['UUID']:
-        host = db_modifyDatabase.getHostByID(y[0])
-        disconnectFromSSH(BaseDevice.ssh[x])
-        ssh = fn.removeDictKey(BaseDevice.ssh, x)
-        writeToLog('disconnected SSH session to device %s for user %s' % (host.hostname, session['USER']))
+        # x is id-uuid
+        y = x.split('--')
+        # y[0] is host id, y[1] is uuid
+        if y[1] == str(session['UUID']):
+            host = db_modifyDatabase.getHostByID(y[0])
+            disconnectFromSSH(BaseDevice.ssh[x])
+            BaseDevice.ssh = fn.removeDictKey(BaseDevice.ssh, x)
+            writeToLog('disconnected SSH session to device %s for user %s' % (host.hostname, session['USER']))
     
     writeToLog('disconnected all SSH sessions for user %s' % (session['USER']))
 
@@ -352,6 +351,7 @@ def viewSpecificHost(x):
       return ('', 204)
 
     host = db_modifyDatabase.getHostByID(x)
+    #activeSession = retrieveSSHSession(host)
     writeToLog('accessed host %s' % (host.hostname))
 
     interfaces = host.pull_host_interfaces()
@@ -380,20 +380,22 @@ def viewSpecificHost(x):
 @app.route('/confirm/confirmintenable/<x>/<y>', methods=['GET', 'POST'])
 def confirmIntEnable(x, y):
     # x = device id, y = interface name
+    host = db_modifyDatabase.getHostByID(x)
     # Removes dashes from interface in URL
     y = interfaceReplaceSlash(y)
     return render_template("confirm/confirmintenable.html",
-                           hostid=x,
+                           host=host,
                            interface=y)
 
 @app.route('/confirm/confirmintdisable/', methods=['GET', 'POST'])
 @app.route('/confirm/confirmintdisable/<x>/<y>', methods=['GET', 'POST'])
 def confirmIntDisable(x, y):
     # x = device id, y = interface name
+    host = db_modifyDatabase.getHostByID(x)
     # Removes dashes from interface in URL
     y = interfaceReplaceSlash(y)
     return render_template("confirm/confirmintdisable.html",
-                           hostid=x,
+                           host=host,
                            interface=y)
 
 @app.route('/confirm/confirmhostdelete/', methods=['GET', 'POST'])
@@ -490,11 +492,15 @@ def resultsIntEnabled(x, y):
 def resultsIntDisabled(x, y):
     initialChecks()
     # x = device id, y = interface name
-    host = db_modifyDatabase.getHostByID(x)
+    host = db_modifyDatabase.getHostByID(x)#ddddd
 
     # Removes dashes from interface in URL and disable interface
-    result = host.run_disable_interface_cmd(interfaceReplaceSlash(y))
-
+    ##result = host.run_disable_interface_cmd(interfaceReplaceSlash(y))
+    # START ORIGINAL
+    activeSession = retrieveSSHSession(host)
+    y = interfaceReplaceSlash(y)
+    result = ci.disableInterface(activeSession, y)
+    # END ORIGINAL
     writeToLog('disabled interface %s on host %s' % (y, host.hostname))
     return render_template("results/resultsinterfacedisabled.html",
                            host=host,
@@ -788,7 +794,7 @@ def hostShellOutput(x, m, y): # NEED TO CLEANUP ddddd
     command = interfaceReplaceSlash(command)
 
     # Append prompt and command executed to beginning of output
-    output.append(findPromptInSession(host.activeSession) + command)
+    output.append(host.find_prompt_in_session() + command)
 
     # Check if last character is a '?'
     if command[-1] == '?':
@@ -801,7 +807,7 @@ def hostShellOutput(x, m, y): # NEED TO CLEANUP ddddd
         #output.extend(getCmdOutput(activeSession, command))
         output.extend(getCmdOutputNoCR(host.activeSession, command))
         # Append prompt and command executed to end of output
-        output.append(findPromptInSession(host.activeSession))
+        output.append(host.find_prompt_in_session())
       
     else:
       if m == 'c':
@@ -809,9 +815,9 @@ def hostShellOutput(x, m, y): # NEED TO CLEANUP ddddd
         output.extend(getCfgCmdOutput(host.activeSession, command))
       else:
         # Get command output as a list.  Insert list contents into 'output' list
-        output.extend(getCmdOutput(host.activeSession, command))
+        output.extend(host.get_cmd_output(command))
         # Append prompt and command executed to end of output
-        output.append(findPromptInSession(host.activeSession))
+        output.append(host.find_prompt_in_session())
 
     writeToLog('ran command on host %s - %s' % (host.hostname, command))
 
@@ -854,27 +860,24 @@ def confirmMultiIntEnable(x, y):
     # x = device id, y = interfaces separated by '&' in front of each interface name
     host = db_modifyDatabase.getHostByID(x)
     return render_template("confirm/confirmmultipleintenable.html",
-                           hostid=x,
-                           interfaces=y,
-                           host=host)
+                           host=host,
+                           interfaces=y)
 
 @app.route('/confirm/confirmmultipleintdisable/<x>/<y>', methods=['GET', 'POST'])
 def confirmMultiIntDisable(x, y):
     # x = device id, y = interfaces separated by '&' in front of each interface name
     host = db_modifyDatabase.getHostByID(x)
     return render_template("confirm/confirmmultipleintdisable.html",
-                           hostid=x,
-                           interfaces=y,
-                           host=host)
+                           host=host,
+                           interfaces=y)
 ### WIP ###
 @app.route('/confirm/confirmmultipleintedit/<x>/<y>', methods=['GET', 'POST'])
 def confirmMultiIntEdit(x, y):
     # x = device id, y = interfaces separated by '&' in front of each interface name
     host = db_modifyDatabase.getHostByID(x)
     return render_template("confirm/confirmmultipleintedit.html",
-                           hostid=x,
-                           interfaces=y,
-                           host=host)
+                           host=host,
+                           interfaces=y)
 
 
 #@app.route('/results/interfaceenabled/', methods=['GET', 'POST'])
@@ -893,7 +896,7 @@ def resultsMultiIntEnabled(x, y):
         a = interfaceReplaceSlash(a)
         result.append(host.run_enable_interface_cmd(a))
 
-    result.append(host.save_config_on_device())
+    #result.append(host.save_config_on_device())
 
     writeToLog('enabled multiple interfaces on host %s' % (host.hostname))
     return render_template("results/resultsmultipleintenabled.html",
@@ -916,7 +919,7 @@ def resultsMultiIntDisabled(x, y):
         a = interfaceReplaceSlash(a)
         result.append(host.run_disable_interface_cmd(a))
 
-    result.append(host.save_config_on_device())
+    #result.append(host.save_config_on_device())
 
     writeToLog('disabled multiple interfaces on host %s' % (host.hostname))
     return render_template("results/resultsmultipleintdisabled.html",

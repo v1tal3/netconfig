@@ -10,15 +10,6 @@
 
 			<h2 class="text-primary">Edit Interface Config Results</h2>
 
-			{% if session['DEBUG'] %}
-				Host: {{ host.hostname }}<br />
-				Interface: {{ interface }}<br />
-				Data Vlan: {{ datavlan }}<br />
-				Voice Vlan: {{ voicevlan }}<br />
-				Other Cmd: {{ other }}<br />
-				<br />
-			{% endif %}
-
 			{% if result %}
 				<p><b>SUCCESS:</b> Interface was successfully edited</p>
 			{% else %}
@@ -28,12 +19,13 @@
 			<p><b>Here are the results:</b></p>
 
 			{% for x in result %}
-				{% if x != '' and 'end' not in x and 'Enter configuration' not in x %}
-					{% if x == 'config term' %}
-						{{ host.hostname }}#config t<br />
-					{% else %}
-						{{ x }}<br />
-					{% endif %}
+				{% if x and 'Enter configuration' not in x %}
+					{{ x }}<br />
+									{% if x == 'config term' %}
+										{{ host.hostname }}#config t<br />
+									{% else %}
+										{{ x }}<br />
+									{% endif %}
 				{% endif %}
 			{% endfor %}
 		</div>

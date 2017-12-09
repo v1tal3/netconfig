@@ -135,7 +135,7 @@ def stripAllAfterChar(x, y):
 	return x
 
 # Splits string on newline, returns as array
-def splitOnNewline(x)
+def splitOnNewline(x):
 	x = x.split('\n')
 	return x
 

@@ -16,19 +16,19 @@ class CiscoIOS(CiscoBaseDevice):
 
 	def pull_run_config(self): #required
 		command = self.cmd_run_config()
-		return self.split_on_newline(self.run_ssh_command(command))
+		return self.get_cmd_output(command)
 
 	def pull_start_config(self): #required
 		command = self.cmd_start_config()
-		return self.split_on_newline(self.run_ssh_command(command))
+		return self.get_cmd_output(command)
 
 	def pull_cdp_neighbor(self): #required
 		command = self.cmd_cdp_neighbor()
-		return self.split_on_newline(self.run_ssh_command(command))
+		return self.get_cmd_output(command)
 
 	def pull_interface_config(self):
 		command = "show run interface %s | exclude configuration|!" % (self.interface)
-		return self.split_on_newline(self.run_ssh_command(command))
+		return self.get_cmd_output(command)
 
 	def pull_interface_mac_addresses(self):
 		command = "show mac address-table interface %s" % (self.interface)
@@ -46,7 +46,7 @@ class CiscoIOS(CiscoBaseDevice):
 
 	def pull_interface_statistics(self):
 		command = "show interface %s" % (self.interface)
-		return self.split_on_newline(self.run_ssh_command(command))
+		return self.get_cmd_output(command)
 
 	def pull_interface_info(self): #required
 		intConfig = self.pull_interface_config()
@@ -57,7 +57,7 @@ class CiscoIOS(CiscoBaseDevice):
 
 	def pull_device_uptime(self): #required
 		command = 'show version | include uptime'
-		uptime = self.split_on_newline(self.run_ssh_command(command))
+		uptime = self.get_cmd_output(command)
 		for x in uptime:
 			output = x.split(' ', 3)[-1]
 		return output
