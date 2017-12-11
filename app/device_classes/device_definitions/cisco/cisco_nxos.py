@@ -145,10 +145,7 @@ class CiscoNXOS(CiscoBaseDevice):
 		return self.split_on_newline(outputResult)
 
 	def count_interface_status(self, interfaces): #required
-		up = 0
-		down = 0
-		disabled = 0
-		total = 0
+		up = down = disabled = total = 0
 
 		for interface in interfaces:
 			if not 'Interface' in interface:

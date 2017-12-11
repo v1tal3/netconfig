@@ -14,15 +14,18 @@ class CiscoIOS(CiscoBaseDevice):
 		command = "show cdp neighbors | begin ID"
 		return command
 
-	def pull_run_config(self, activeSession): #required
+	# Required
+	def pull_run_config(self, activeSession):
 		command = self.cmd_run_config()
 		return self.get_cmd_output(command, activeSession)
 
-	def pull_start_config(self, activeSession): #required
+	# Required
+	def pull_start_config(self, activeSession):
 		command = self.cmd_start_config()
 		return self.get_cmd_output(command, activeSession)
 
-	def pull_cdp_neighbor(self, activeSession): #required
+	# Required
+	def pull_cdp_neighbor(self, activeSession):
 		command = self.cmd_cdp_neighbor()
 		result = self.get_cmd_output_with_commas(command, activeSession)
 		return result
@@ -49,21 +52,24 @@ class CiscoIOS(CiscoBaseDevice):
 		command = "show interface %s" % (self.interface)
 		return self.get_cmd_output(command, activeSession)
 
-	def pull_interface_info(self, activeSession): #required
+	# Required
+	def pull_interface_info(self, activeSession):
 		intConfig = self.pull_interface_config(activeSession)
 		intMac = self.pull_interface_mac_addresses(activeSession)
 		intStats = self.pull_interface_statistics(activeSession)
 
 		return intConfig, intMac, intStats
 
-	def pull_device_uptime(self, activeSession): #required
+	# Required
+	def pull_device_uptime(self, activeSession):
 		command = 'show version | include uptime'
 		uptime = self.get_cmd_output(command, activeSession)
 		for x in uptime:
 			output = x.split(' ', 3)[-1]
 		return output
 
-	def pull_host_interfaces(self, activeSession): #required
+	# Required
+	def pull_host_interfaces(self, activeSession):
 		command = "show ip interface brief"
 		result = self.run_ssh_command(command, activeSession)
 		# Returns False if nothing was returned
@@ -71,7 +77,8 @@ class CiscoIOS(CiscoBaseDevice):
 			return result
 		return self.split_on_newline(self.cleanup_ios_output(result))
 
-	def count_interface_status(self, interfaces): #required
+	# Required
+	def count_interface_status(self, interfaces):
 		up = down = disabled = total = 0
 		for interface in interfaces:
 			if not 'Interface' in interface:
