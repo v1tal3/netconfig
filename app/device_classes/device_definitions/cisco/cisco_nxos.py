@@ -26,6 +26,7 @@ class CiscoNXOS(CiscoBaseDevice):
 		command = self.cmd_start_config()
 		return self.get_cmd_output(command, activeSession)
 
+	# This needs to be completely redone properly using XML pulls/parsing
 	def pull_cdp_neighbor(self, activeSession): #required
 		command = self.cmd_cdp_neighbor()
 		return self.get_cmd_output_with_commas(command, activeSession)
