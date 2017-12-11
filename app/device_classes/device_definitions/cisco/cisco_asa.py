@@ -10,10 +10,6 @@ class CiscoASA(CiscoBaseDevice):
 		command = 'show startup-config'
 		return command
 
-	def cmd_cdp_neighbor(self):
-		command = ''
-		return command
-
 	def pull_run_config(self, activeSession): #required
 		command = self.cmd_run_config()
 		return self.get_cmd_output(command, activeSession)
@@ -22,9 +18,9 @@ class CiscoASA(CiscoBaseDevice):
 		command = self.cmd_start_config()
 		return self.get_cmd_output(command, activeSession)
 
+	# Not supported on ASA's
 	def pull_cdp_neighbor(self, activeSession): #required
-		command = self.cmd_cdp_neighbor()
-		return self.get_cmd_output_with_commas(command, activeSession)
+		return ''
 
 	def pull_interface_config(self, activeSession):
 		command = "show run interface %s | exclude configuration|!" % (self.interface)
@@ -47,16 +43,18 @@ class CiscoASA(CiscoBaseDevice):
 
 	def pull_device_uptime(self, activeSession):
 		command = 'show version | include up'
-		return self.get_cmd_output(command, activeSession)
-		for x in uptime:
+		output = self.get_cmd_output(command, activeSession)
+		for x in output:
 			if 'failover' in x:
 				break
+			elif 'file' in x:
+				pass
 			else:
-				uptimeOutput = x.split(' ', 2)[-1]
-		return output
+				uptime = x.split(' ', 2)[2]
+		return uptime
 
 	def pull_host_interfaces(self, activeSession):
-		command = "show ip interface brief"
+		command = "show interface ip brief"
 		result = self.run_ssh_command(command, activeSession)
 		# Returns False if nothing was returned
 		if not result:
@@ -64,7 +62,11 @@ class CiscoASA(CiscoBaseDevice):
 		return self.split_on_newline(self.cleanup_ios_output(result))
 
 	def count_interface_status(self, interfaces): #required
-		up, down, disabled, total = 0
+		up = 0
+		down = 0
+		disabled = 0
+		total = 0
+
 		for interface in interfaces:
 			if not 'Interface' in interface:
 				if 'administratively down,down' in interface:

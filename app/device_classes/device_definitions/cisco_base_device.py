@@ -2,7 +2,6 @@ from base_device import BaseDevice
 from ...scripts_bank.lib import netmiko_functions as nfn
 from ...scripts_bank.lib import functions as fn
 from flask import g, session
-#from time import sleep
 
 class CiscoBaseDevice(BaseDevice):
 
@@ -63,7 +62,6 @@ class CiscoBaseDevice(BaseDevice):
 		cmdList.append("interface %s" % interface)
 		cmdList.append("%s" % (self.get_cmd_enable_interface()))
 		cmdList.append("end")
-		#sleep(.1) # Necessary. Test later
 
 		return self.run_ssh_config_commands(cmdList, activeSession)
 
@@ -72,7 +70,6 @@ class CiscoBaseDevice(BaseDevice):
 		cmdList.append("interface %s" % interface)
 		cmdList.append("%s" % (self.get_cmd_disable_interface()))
 		cmdList.append("end")
-		#sleep(.1) # Necessary. Test later
 
 		return self.run_ssh_config_commands(cmdList, activeSession)
 
@@ -104,7 +101,6 @@ class CiscoBaseDevice(BaseDevice):
 
 		cmdList.append("end")
 		cmdList.append(self.get_save_config_cmd())
-		#sleep(.1) # Necessary. Test later
 
 		return self.run_ssh_config_commands(cmdList, activeSession)
 

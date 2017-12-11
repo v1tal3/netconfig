@@ -366,6 +366,7 @@ def viewSpecificHost(x):
     activeSession = retrieveSSHSession(host)
 
     interfaces = host.pull_host_interfaces(activeSession)
+    
     if interfaces:
       upInt, downInt, disabledInt, totalInt = host.count_interface_status(interfaces)
 

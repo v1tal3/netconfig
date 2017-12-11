@@ -65,27 +65,3 @@ class BaseDevice(object):
 
 	def find_prompt_in_session(self, activeSession):
 		return nfn.findPromptInSession(activeSession)
-	'''
-	# Returns active SSH session for provided host (self) if it exists.  Otherwise gets a session, stores it, and returns it
-	def retrieve_ssh_session(self):
-		user_id = str(g.db.hget('users', session['USER']))
-		password = str(g.db.hget(str(user_id), 'pw'))
-		creds = fn.setUserCredentials(session['USER'], password)
-		# Store SSH Dict key as self.id followed by '-' followed by username
-		sshKey = str(self.id) + '--' + str(session['UUID'])
-
-		#if not self.sshStore[sshKey]:
-		if sshKey not in type(self).sshStore:
-			fn.writeToLog('initiated new SSH connection to %s' % (self.hostname))
-			# If no currently active SSH sessions, initiate a new one
-			type(self).sshStore[sshKey] = nfn.getSSHSession(self.ios_type, self.ipv4_addr, creds)
-		
-		# Run test to verify if socket connection is still open or not
-		if not nfn.sessionIsAlive(type(self).sshStore[sshKey]):
-			# If session is closed, reestablish session and log event
-			fn.writeToLog('reestablished SSH connection to %s' % (self.hostname))
-			type(self).sshStore[sshKey] = nfn.getSSHSession(self.ios_type, self.ipv4_addr, creds)
-
-		self.activeSession = type(self).sshStore[sshKey]
-		return self.activeSession
-	'''

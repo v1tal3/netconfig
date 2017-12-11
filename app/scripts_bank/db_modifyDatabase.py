@@ -154,28 +154,6 @@ def searchHostInDB(x):
             return False, ''
     except:
         return False, ''
-'''
-def editInterface(host, iface, datavlan, voicevlan, other):
-    cmdList=[]
-    cmdList.append("interface %s" % iface)
-
-    if datavlan != '0':
-        cmdList.append("switchport access vlan %s" % datavlan)
-    if voicevlan != '0':
-        cmdList.append("switchport voice vlan %s" % voicevlan)
-    if other != '0':
-        # + is used to represent spaces
-        other = other.replace('+', ' ')
-
-        # & is used to represent new lines
-        for x in other.split('&'):
-            cmdList.append(x)
-
-    cmdList.append("end")
-    cmdList.append("wr mem")
-    
-    return executeSSHCmdsViaNFN(host, cmdList)
-'''
 
 '''
 # Sessions
