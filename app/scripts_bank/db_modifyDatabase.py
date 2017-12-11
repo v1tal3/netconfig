@@ -123,19 +123,24 @@ def getHostsByIOSType(x):
     hosts = models.Host.query.filter_by(ios_type=x)
     return hosts
 
-def editHostInDatabase(host, hostname, ipv4_addr, hosttype, ios_type):
-    try:
-        if hostname:
-            host.hostname = hostname
-        if ipv4_addr:
-            host.ipv4_addr = ipv4_addr
-        if hosttype:
-            host.type = hosttype
-        if ios_type:
-            host.ios_type = ios_type
-        db.session.commit()
-        return True
-    except:
+def editHostInDatabase(originalHostID, hostname, ipv4_addr, hosttype, ios_type):
+    # This is only supported when using the local database
+    if app.config['DATALOCATION'] == 'local':
+        try:
+            host = models.Host.query.filter_by(id=originalHostID).first()
+            if hostname:
+                host.hostname = hostname
+            if ipv4_addr:
+                host.ipv4_addr = ipv4_addr
+            if hosttype:
+                host.type = hosttype
+            if ios_type:
+                host.ios_type = ios_type
+            db.session.commit()
+            return True
+        except:
+            return False
+    else:
         return False
 
 # Return True if provided host IP address is in database, False if not

@@ -19,7 +19,6 @@ from scripts_bank import netboxAPI
 from redis import StrictRedis # http://blog.hackerearth.com/twitter-client-using-flask-redis
 from uuid import uuid4
 from device_classes.device_definitions.base_device import BaseDevice
-import time
 
 # Gets page referrer
 # referrer = request.headers.get("Referer")
@@ -101,39 +100,46 @@ def retrieveSSHSession(host):
 
 # Disconnect any SSH sessions for a specific host from all users
 def disconnectSpecificSSHSession(host):
-    for x in BaseDevice.sshStore:
+    global ssh
+
+    for x in ssh:
       # x is id-uuid
       y = x.split('--')
       # y[0] is host id, y[1] is uuid
       if int(y[0]) == int(host.id):
-        disconnectFromSSH(BaseDevice.sshStore[x])
-        BaseDevice.ssh = fn.removeDictKey(BaseDevice.sshStore, x)
+        disconnectFromSSH(ssh[x])
+        ssh = fn.removeDictKey(ssh, x)
         writeToLog('disconnected SSH session to provided host %s from user %s' % (host.hostname, session['USER']))
 
 # Disconnect all remaining active SSH sessions tied to a user
 def disconnectAllSSHSessions():
-    for x in BaseDevice.sshStore:
-        # x is id-uuid
-        y = x.split('--')
-        # y[0] is host id, y[1] is uuid
-        if y[1] == str(session['UUID']):
-            host = db_modifyDatabase.getHostByID(y[0])
-            disconnectFromSSH(BaseDevice.sshStore[x])
-            BaseDevice.sshStore = fn.removeDictKey(BaseDevice.sshStore, x)
-            writeToLog('disconnected SSH session to device %s for user %s' % (host.hostname, session['USER']))
+    global ssh
+
+    for x in ssh:
+      # x is id-uuid
+      y = x.split('--')
+      # y[0] is host id, y[1] is uuid
+      if str(y[1]) == str(session['UUID']):
+        disconnectFromSSH(ssh[x])
+        host = db_modifyDatabase.getHostByID(y[0])
+        ssh = fn.removeDictKey(ssh, x)
+        writeToLog('disconnected SSH session to device %s for user %s' % (host.hostname, y[1]))
     
     writeToLog('disconnected all SSH sessions for user %s' % (session['USER']))
 
 # Returns number of active SSH sessions tied to user
 def countAllSSHSessions():
+    global ssh
+
     i = 0
-    for x in BaseDevice.sshStore:
-        # x is id-uuid
-        y = x.split('--')
-        # y[0] is host id, y[1] is uuid
-        if y[1] == str(session['UUID']):
-            # Increment counter
-            i += 1
+    for x in ssh:
+      # x is id-uuid
+      y = x.split('--')
+      # y[0] is host id, y[1] is uuid
+      if str(y[1]) == str(session['UUID']):
+        # Increment counter
+        i += 1
+
     return i
 
 def interfaceReplaceSlash(x):
@@ -336,7 +342,8 @@ def deviceUptime(x):
     # x = host id
     initialChecks()
     host = db_modifyDatabase.getHostByID(x)
-    return jsonify(host.pull_device_uptime())
+    activeSession = retrieveSSHSession(host)
+    return jsonify(host.pull_device_uptime(activeSession))
 
 # To show hosts from database
 @app.route('/db/viewhosts/<x>', methods=['GET'])
@@ -353,15 +360,14 @@ def viewSpecificHost(x):
 
     host = db_modifyDatabase.getHostByID(x)
 
-    #activeSession = retrieveSSHSession(host)
-    writeToLog('accessed host %s' % (host.hostname))
+    writeToLog('accessed host %s using IPv4 address %s' % (host.hostname, host.ipv4_addr))
 
     # Get any existing SSH sessions
     activeSession = retrieveSSHSession(host)
 
     interfaces = host.pull_host_interfaces(activeSession)
     if interfaces:
-      upInt, downInt, disabledInt, totalInt = host.count_interface_status(interfaces, activeSession)
+      upInt, downInt, disabledInt, totalInt = host.count_interface_status(interfaces)
 
     # if interfaces is x.x.x.x skipped - connection timeout, throw error page redirect
     if fn.containsSkipped(interfaces) or not interfaces:
@@ -433,26 +439,37 @@ def confirmIntEdit():
 @app.route('/confirm/confirmhostedit/<x>', methods=['GET', 'POST'])
 def confirmHostEdit(x):
     # x = original host ID
-    host = db_modifyDatabase.getHostByID(x)
+    originalHost = db_modifyDatabase.getHostByID(x)
     hostname = request.form['hostname']
     ipv4_addr = request.form['ipv4_addr']
     hosttype = request.form['hosttype']
     ios_type = request.form['ios_type']
-    
-    result = db_modifyDatabase.editHostInDatabase(host, hostname, ipv4_addr, hosttype, ios_type)
-    #result = True
+
+    # If exists, disconnect any existing SSH sessions and clear them from the SSH dict
+    try:
+      disconnectSpecificSSHSession(originalHost)
+      writeToLog('disconnected and cleared saved SSH session information for edited host %s' % (originalHost.hostname))
+    except (socket.error, EOFError):
+      writeToLog('no existing SSH sessions for edited host %s' % (originalHost.hostname))
+    except:
+      writeToLog('could not clear SSH session for edited host %s' % (originalHost.hostname))
+
+    result = db_modifyDatabase.editHostInDatabase(originalHost.id, hostname, ipv4_addr, hosttype, ios_type)
+
     if result:
-      writeToLog('edited host %s in database' % (host.hostname))
+      updatedHost = db_modifyDatabase.getHostByID(x)
+      writeToLog('edited host %s in database' % (originalHost.hostname))
       return render_template("confirm/confirmhostedit.html",
                              title='Edit host confirm',
-                             host=host,
+                             originalHost=originalHost,
+                             updatedHost=updatedHost,
                              hostname=hostname,
                              ipv4_addr=ipv4_addr,
                              hosttype=hosttype,
                              ios_type=ios_type)
     else:
         return redirect(url_for('confirmHostEdit',
-                                x=host))
+                                x=originalHost))
 
 @app.route('/confirm/confirmcmdcustom/', methods=['GET', 'POST'])
 def confirmCmdCustom():
@@ -483,12 +500,14 @@ def resultsIntEnabled(x, y):
     # x = device id, y = interface name
     host = db_modifyDatabase.getHostByID(x)
 
+    activeSession = retrieveSSHSession(host)
+
     #sshVar = retrieveSSHSession(host)
     # THIS LINE ONLY WORKS IF ABOVE LINE IS EXECUTED FIRST??? #bbbbb
     #result = ci.enableInterface(host.activeSession, interfaceReplaceSlash(y))
     #time.sleep(1) # Also works if I delay by 1 second ?????
     # Removes dashes from interface in URL and enabel interface
-    result = host.run_enable_interface_cmd(interfaceReplaceSlash(y))
+    result = host.run_enable_interface_cmd(interfaceReplaceSlash(y), activeSession)
 
     writeToLog('enabled interface %s on host %s' % (y, host.hostname))
     return render_template("results/resultsinterfaceenabled.html",
@@ -503,8 +522,10 @@ def resultsIntDisabled(x, y):
     # x = device id, y = interface name
     host = db_modifyDatabase.getHostByID(x)
 
+    activeSession = retrieveSSHSession(host)
+
     # Removes dashes from interface in URL and disable interface
-    result = host.run_disable_interface_cmd(interfaceReplaceSlash(y))
+    result = host.run_disable_interface_cmd(interfaceReplaceSlash(y), activeSession)
 
     writeToLog('disabled interface %s on host %s' % (y, host.hostname))
     return render_template("results/resultsinterfacedisabled.html",
@@ -519,8 +540,10 @@ def resultsIntEdit(x, y, datavlan, voicevlan, other):
     # x = device id, y = interface name, d = data vlan, v = voice vlan, o = other
     host = db_modifyDatabase.getHostByID(x)
 
+    activeSession = retrieveSSHSession(host)
+
     # Remove dashes from interface in URL and edit interface config
-    result = host.run_edit_interface_cmd(interfaceReplaceSlash(y), datavlan, voicevlan, other)
+    result = host.run_edit_interface_cmd(interfaceReplaceSlash(y), datavlan, voicevlan, other, activeSession)
 
     writeToLog('edited interface %s on host %s' % (y, host.hostname))
     return render_template("results/resultsinterfaceedit.html",
@@ -553,7 +576,11 @@ def resultsCmdCustom():
     initialChecks()
     host = db_modifyDatabase.getHostByID(session['HOSTID'])
 
-    result = host.run_multiple_commands(session['COMMAND'])
+    activeSession = retrieveSSHSession(host)
+
+    command = session['COMMAND']
+
+    result = host.run_multiple_commands(command, activeSession)
 
     session.pop('HOSTNAME', None)
     session.pop('COMMAND', None)
@@ -570,7 +597,11 @@ def resultsCfgCmdCustom():
     initialChecks()
     host = db_modifyDatabase.getHostByID(session['HOSTID'])
 
-    result = host.run_multiple_config_commands(session['COMMAND'])
+    activeSession = retrieveSSHSession(host)
+
+    command = session['COMMAND']
+
+    result = host.run_multiple_config_commands(command, activeSession)
 
     session.pop('HOSTNAME', None)
     session.pop('COMMAND', None)
@@ -595,12 +626,14 @@ def modalSpecificInterfaceOnHost(x, y):
     # x = device id, y = interface name
     host = db_modifyDatabase.getHostByID(x)
 
+    activeSession = retrieveSSHSession(host)
+
     # Removes dashes from interface in URL, replacing '_' with '/'
     interface = interfaceReplaceSlash(y)
     # Replace's '_' with '.'
     host.interface = interface.replace('=', '.')
 
-    intConfig, intMac, intStats = host.pull_interface_info()
+    intConfig, intMac, intStats = host.pull_interface_info(activeSession)
     macToIP = ''
     writeToLog('viewed interface %s on host %s' % (interface, host.hostname))
     return render_template("/viewspecificinterfaceonhost.html",
@@ -615,7 +648,7 @@ def modalSpecificInterfaceOnHost(x, y):
 # To show interface commands from host device
 @app.route('/modaleditinterface/', methods=['GET', 'POST'])
 @app.route('/modaleditinterface/<x>/<y>', methods=['GET', 'POST'])
-def modalEditInterfaceOnHost(x, y):
+def modalEditInterfaceOnHost(x, y): #ddddd
     initialChecks()
 
     # x = device id, y = interface name
@@ -643,7 +676,7 @@ def modalEditInterfaceOnHost(x, y):
 # To show interface commands from host device
 @app.route('/modalinterfaceinfo/', methods=['GET', 'POST'])
 @app.route('/modalinterfaceinfo/<x>/<y>', methods=['GET', 'POST'])
-def modalInterfaceInfo(x, y):
+def modalInterfaceInfo(x, y): #ddddd
     initialChecks()
 
     # x = device id, y = interface name
@@ -668,7 +701,8 @@ def modalCmdShowRunConfig(x):
     initialChecks()
     # x = device id
     host = db_modifyDatabase.getHostByID(x)
-    hostConfig = host.pull_run_config()
+    activeSession = retrieveSSHSession(host)
+    hostConfig = host.pull_run_config(activeSession)
     writeToLog('viewed running-config via button on host %s' % (host.hostname))
     return render_template("/cmdshowrunconfig.html",
                            host=host,
@@ -681,7 +715,8 @@ def modalCmdShowStartConfig(x):
     initialChecks()
     # x = device id
     host = db_modifyDatabase.getHostByID(x)
-    hostConfig = host.pull_start_config()
+    activeSession = retrieveSSHSession(host)
+    hostConfig = host.pull_start_config(activeSession)
     writeToLog('viewed startup-config via button on host %s' % (host.hostname))
     return render_template("/cmdshowstartconfig.html",
                            host=host,
@@ -694,7 +729,8 @@ def modalCmdShowCDPNeigh(x):
     initialChecks()
     # x = device id
     host = db_modifyDatabase.getHostByID(x)
-    result = host.pull_cdp_neighbor()
+    activeSession = retrieveSSHSession(host)
+    result = host.pull_cdp_neighbor(activeSession)
     writeToLog('viewed CDP neighbors via button on host %s' % (host.hostname))
     return render_template("/cmdshowcdpneigh.html",
                            host=host,
@@ -707,7 +743,8 @@ def modalCmdShowInventory(x):
     initialChecks()
     # x = device id
     host = db_modifyDatabase.getHostByID(x)
-    result = host.pull_inventory()
+    activeSession = retrieveSSHSession(host)
+    result = host.pull_inventory(activeSession)
 
     writeToLog('viewed inventory info via button on host %s' % (host.hostname))
     return render_template("/cmdshowinventory.html",
@@ -721,7 +758,8 @@ def modalCmdShowVersion(x):
     initialChecks()
     # x = device id
     host = db_modifyDatabase.getHostByID(x)
-    result = host.pull_version()
+    activeSession = retrieveSSHSession(host)
+    result = host.pull_version(activeSession)
 
     writeToLog('viewed version info via button on host %s' % (host.hostname))
     return render_template("/cmdshowversion.html",
@@ -762,7 +800,8 @@ def modalCmdSaveConfig(x):
     initialChecks()
     # x = device id
     host = db_modifyDatabase.getHostByID(x)
-    result = host.save_config_on_device()
+    activeSession = retrieveSSHSession(host)
+    result = host.save_config_on_device(activeSession)
 
     writeToLog('saved config via button on host %s' % (host.hostname))
     return render_template("/cmdsaveconfig.html",
@@ -791,6 +830,7 @@ def hostShellOutput(x, m, y): # NEED TO CLEANUP ddddd
 
     # x = device id, m = config or enable mode, y = encoded commands from javascript
     host = db_modifyDatabase.getHostByID(x)
+    activeSession = retrieveSSHSession(host)
     
     # Decode command in URL received from javascript
     command = unquote_plus(y).decode('utf-8')
@@ -799,7 +839,7 @@ def hostShellOutput(x, m, y): # NEED TO CLEANUP ddddd
     command = interfaceReplaceSlash(command)
 
     # Append prompt and command executed to beginning of output
-    output.append(host.find_prompt_in_session() + command)
+    output.append(host.find_prompt_in_session(activeSession) + command)
 
     # Check if last character is a '?'
     if command[-1] == '?':
@@ -810,19 +850,19 @@ def hostShellOutput(x, m, y): # NEED TO CLEANUP ddddd
       else:
         # Get command output as a list.  Insert list contents into 'output' list
         #output.extend(getCmdOutput(activeSession, command))
-        output.extend(getCmdOutputNoCR(host.activeSession, command))
+        output.extend(getCmdOutputNoCR(activeSession, command))
         # Append prompt and command executed to end of output
-        output.append(host.find_prompt_in_session())
+        output.append(host.find_prompt_in_session(activeSession))
       
     else:
       if m == 'c':
         # Get command output as a list.  Insert list contents into 'output' list
-        output.extend(getCfgCmdOutput(host.activeSession, command))
+        output.extend(getCfgCmdOutput(activeSession, command))
       else:
         # Get command output as a list.  Insert list contents into 'output' list
-        output.extend(host.get_cmd_output(command))
+        output.extend(host.get_cmd_output(command, activeSession))
         # Append prompt and command executed to end of output
-        output.append(host.find_prompt_in_session())
+        output.append(host.find_prompt_in_session(activeSession))
 
     writeToLog('ran command on host %s - %s' % (host.hostname, command))
 
@@ -838,7 +878,8 @@ def enterConfigMode(x):
   initialChecks()
   # x = device id
   host = db_modifyDatabase.getHostByID(x)
-  host.enter_config_mode()
+  activeSession = retrieveSSHSession(host)
+  host.enter_config_mode(activeSession)
     
   writeToLog('entered config mode via iShell on host %s' % (host.hostname))
   return ('', 204)
@@ -850,7 +891,8 @@ def exitConfigMode(x):
 
   # x = device id
   host = db_modifyDatabase.getHostByID(x)
-  host.exit_config_mode()
+  activeSession = retrieveSSHSession(host)
+  host.exit_config_mode(activeSession)
 
   writeToLog('exited config mode via iShell on host %s' % (host.hostname))
   return ('', 204)
@@ -891,6 +933,7 @@ def resultsMultiIntEnabled(x, y):
     initialChecks()
     # x = device id, y = interfaces separated by '&' in front of each interface name
     host = db_modifyDatabase.getHostByID(x)
+    activeSession = retrieveSSHSession(host)
 
     result = []
     # Split by interfaces, separated by '&'
@@ -899,7 +942,7 @@ def resultsMultiIntEnabled(x, y):
       if a:
         # Removes dashes from interface in URL
         a = interfaceReplaceSlash(a)
-        result.append(host.run_enable_interface_cmd(a))
+        result.append(host.run_enable_interface_cmd(a, activeSession))
 
     #result.append(host.save_config_on_device())
 
@@ -915,6 +958,7 @@ def resultsMultiIntDisabled(x, y):
     initialChecks()
     # x = device id, y = interfaces separated by '&' in front of each interface name
     host = db_modifyDatabase.getHostByID(x)
+    activeSession = retrieveSSHSession(host)
 
     result = []
     # Split by interfaces, separated by '&'
@@ -922,7 +966,7 @@ def resultsMultiIntDisabled(x, y):
       if a:
         # Removes dashes from interface in URL
         a = interfaceReplaceSlash(a)
-        result.append(host.run_disable_interface_cmd(a))
+        result.append(host.run_disable_interface_cmd(a, activeSession))
 
     #result.append(host.save_config_on_device())
 
@@ -938,6 +982,7 @@ def resultsMultiIntEdit(x, y):
     initialChecks()
     # x = device id, y = interfaces separated by '&' in front of each interface name
     host = db_modifyDatabase.getHostByID(x)
+    activeSession = retrieveSSHSession(host)
 
     result = []
     # Split by interfaces, separated by '&'
@@ -947,7 +992,7 @@ def resultsMultiIntEdit(x, y):
         a = interfaceReplaceSlash(a)
         #result.append(ci.editInterface(activeSession, a, datavlan, voicevlan, other, host))
 
-    result.append(host.save_config_on_device())
+    result.append(host.save_config_on_device(activeSession))
 
     writeToLog('edited multiple interfaces on host %s' % (host.hostname))
     return render_template("results/resultsmultipleintedit.html",

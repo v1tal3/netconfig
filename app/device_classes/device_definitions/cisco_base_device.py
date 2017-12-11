@@ -2,7 +2,7 @@ from base_device import BaseDevice
 from ...scripts_bank.lib import netmiko_functions as nfn
 from ...scripts_bank.lib import functions as fn
 from flask import g, session
-from time import sleep
+#from time import sleep
 
 class CiscoBaseDevice(BaseDevice):
 
@@ -58,23 +58,23 @@ class CiscoBaseDevice(BaseDevice):
 		x = x.replace('linkFlapE ', 'linkFlapE,')
 		return x
 
-	def run_enable_interface_cmd(self, interface):
+	def run_enable_interface_cmd(self, interface, activeSession):
 		cmdList = []
 		cmdList.append("interface %s" % interface)
 		cmdList.append("%s" % (self.get_cmd_enable_interface()))
 		cmdList.append("end")
-		sleep(.1) # Necessary. Test later
+		#sleep(.1) # Necessary. Test later
 
-		return self.run_ssh_config_commands(cmdList)
+		return self.run_ssh_config_commands(cmdList, activeSession)
 
-	def run_disable_interface_cmd(self, interface):
+	def run_disable_interface_cmd(self, interface, activeSession):
 		cmdList = []
 		cmdList.append("interface %s" % interface)
 		cmdList.append("%s" % (self.get_cmd_disable_interface()))
 		cmdList.append("end")
-		sleep(.1) # Necessary. Test later
+		#sleep(.1) # Necessary. Test later
 
-		return self.run_ssh_config_commands(cmdList)
+		return self.run_ssh_config_commands(cmdList, activeSession)
 
 	def get_save_config_cmd(self):
 		if self.ios_type == 'cisco_nxos':
@@ -82,11 +82,11 @@ class CiscoBaseDevice(BaseDevice):
 		else:
 			return "write memory"
 
-	def save_config_on_device(self): #required
+	def save_config_on_device(self, activeSession): #required
 		command = self.get_save_config_cmd()
-		return self.split_on_newline(nfn.runSSHCommandInSession(command, self.activeSession))
+		return self.split_on_newline(nfn.runSSHCommandInSession(command, activeSession))
 
-	def run_edit_interface_cmd(self, interface, datavlan, voicevlan, other):
+	def run_edit_interface_cmd(self, interface, datavlan, voicevlan, other, activeSession):
 		cmdList=[]
 		cmdList.append("interface %s" % interface)
 
@@ -104,9 +104,9 @@ class CiscoBaseDevice(BaseDevice):
 
 		cmdList.append("end")
 		cmdList.append(self.get_save_config_cmd())
-		sleep(.1) # Necessary. Test later
+		#sleep(.1) # Necessary. Test later
 
-		return self.run_ssh_config_commands(cmdList)
+		return self.run_ssh_config_commands(cmdList, activeSession)
 
 	def cmd_show_inventory(self):
 		command = 'show inventory'
@@ -116,12 +116,12 @@ class CiscoBaseDevice(BaseDevice):
 		command = 'show version'
 		return command
 
-	def pull_inventory(self): #required
+	def pull_inventory(self, activeSession): #required
 		command = self.cmd_show_inventory()
-		return self.split_on_newline(self.run_ssh_command(command))
+		return self.split_on_newline(self.run_ssh_command(command, activeSession))
 
-	def pull_inventory(self): #required
+	def pull_version(self, activeSession): #required
 		command = self.cmd_show_version()
-		return self.split_on_newline(self.run_ssh_command(command))
+		return self.split_on_newline(self.run_ssh_command(command, activeSession))
 
 

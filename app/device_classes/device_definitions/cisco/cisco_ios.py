@@ -11,38 +11,30 @@ class CiscoIOS(CiscoBaseDevice):
 		return command
 
 	def cmd_cdp_neighbor(self):
-		command = 'show cdp neighbors | begin ID'
+		command = "show cdp neighbors | begin ID"
 		return command
 
-	def cmd_version(self):
-		command = 'show version'
-		return command
-
-	def pull_run_config(self): #required
+	def pull_run_config(self, activeSession): #required
 		command = self.cmd_run_config()
-		return self.get_cmd_output(command)
+		return self.get_cmd_output(command, activeSession)
 
-	def pull_start_config(self): #required
+	def pull_start_config(self, activeSession): #required
 		command = self.cmd_start_config()
-		return self.get_cmd_output(command)
+		return self.get_cmd_output(command, activeSession)
 
-	def pull_cdp_neighbor(self): #required
+	def pull_cdp_neighbor(self, activeSession): #required
 		command = self.cmd_cdp_neighbor()
-		return self.get_cmd_output(command)
+		result = self.get_cmd_output_with_commas(command, activeSession)
+		return result
 
-	def pull_version(self): #required
-		command = self.cmd_version()
-		print command
-		return self.get_cmd_output(command)
-
-	def pull_interface_config(self):
+	def pull_interface_config(self, activeSession):
 		command = "show run interface %s | exclude configuration|!" % (self.interface)
-		return self.get_cmd_output(command)
+		return self.get_cmd_output(command, activeSession)
 
-	def pull_interface_mac_addresses(self):
+	def pull_interface_mac_addresses(self, activeSession):
 		command = "show mac address-table interface %s" % (self.interface)
 		for a in range(2):
-			result = self.run_ssh_command(command)
+			result = self.run_ssh_command(command, activeSession)
 			if self.check_invalid_input_detected(result):
 				command = "show mac-address-table interface %s" % (self.interface)
 				continue
@@ -53,27 +45,27 @@ class CiscoIOS(CiscoBaseDevice):
 		else:
 			return self.split_on_newline(self.replace_double_spaces_commas(result).replace('*', ''))
 
-	def pull_interface_statistics(self):
+	def pull_interface_statistics(self, activeSession):
 		command = "show interface %s" % (self.interface)
-		return self.get_cmd_output(command)
+		return self.get_cmd_output(command, activeSession)
 
-	def pull_interface_info(self): #required
-		intConfig = self.pull_interface_config()
-		intMac = self.pull_interface_mac_addresses()
-		intStats = self.pull_interface_statistics()
+	def pull_interface_info(self, activeSession): #required
+		intConfig = self.pull_interface_config(activeSession)
+		intMac = self.pull_interface_mac_addresses(activeSession)
+		intStats = self.pull_interface_statistics(activeSession)
 
 		return intConfig, intMac, intStats
 
-	def pull_device_uptime(self): #required
+	def pull_device_uptime(self, activeSession): #required
 		command = 'show version | include uptime'
-		uptime = self.get_cmd_output(command)
+		uptime = self.get_cmd_output(command, activeSession)
 		for x in uptime:
 			output = x.split(' ', 3)[-1]
 		return output
 
-	def pull_host_interfaces(self): #required
+	def pull_host_interfaces(self, activeSession): #required
 		command = "show ip interface brief"
-		result = self.run_ssh_command(command)
+		result = self.run_ssh_command(command, activeSession)
 		# Returns False if nothing was returned
 		if not result:
 			return result

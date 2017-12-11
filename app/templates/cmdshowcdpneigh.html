@@ -27,7 +27,7 @@
 											{% set line = line.replace(' Ten ', ',Ten ') %} <!--IOS-->
 											{% set line = line.replace(' Fas ', ',Fas ') %} <!--IOS-->
 											{% set line = line.replace(' Eth ', ',Eth ') %} <!--IOS-->
-											{% set line = line.replace(' eth', ',eth') %} <!--NXOS-->
+											{% set line = line.replace(' eth', ',eth') %} 	<!--NXOS-->
 											{% set line = line.replace(' Port ', ',Port ') %} <!--IOS Polycom Phones-->
 											{% for x in line.split(',') %}
 												{% if x %}

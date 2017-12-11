@@ -18,47 +18,50 @@ class CiscoNXOS(CiscoBaseDevice):
 		command = 'show cdp neighbors | begin ID'
 		return command
 
-	def pull_run_config(self): #required
+	def pull_run_config(self, activeSession): #required
 		command = self.cmd_run_config()
-		return self.get_cmd_output(command)
+		return self.get_cmd_output(command, activeSession)
 
-	def pull_start_config(self): #required
+	def pull_start_config(self, activeSession): #required
 		command = self.cmd_start_config()
-		return self.get_cmd_output(command)
+		return self.get_cmd_output(command, activeSession)
 
-	def pull_cdp_neighbor(self): #required
+	def pull_cdp_neighbor(self, activeSession): #required
 		command = self.cmd_cdp_neighbor()
-		return self.get_cmd_output(command)
+		return self.get_cmd_output_with_commas(command, activeSession)
 
-	def pull_interface_config(self):
+	def pull_interface_config(self, activeSession):
 		command = "show run interface %s | exclude version | exclude Command | exclude !" % (self.interface)
-		return self.get_cmd_output(command)
+		return self.get_cmd_output(command, activeSession)
 
-	def pull_interface_mac_addresses(self):
+	def pull_interface_mac_addresses(self, activeSession):
 		command = "show mac address-table interface %s | exclude VLAN | exclude Legend" % (self.interface)
+		result = self.run_ssh_command(command, activeSession)
 		return self.split_on_newline(self.replace_double_spaces_commas(result).replace('*', ''))
 
-	def pull_interface_statistics(self):
+	def pull_interface_statistics(self, activeSession):
 		command = "show interface %s" % (self.interface)
-		return self.get_cmd_output(command)
+		return self.get_cmd_output(command, activeSession)
 
-	def pull_interface_info(self):
-		intConfig = self.pull_interface_config()
-		intMac = self.pull_interface_mac_addresses()
-		intStats = self.pull_interface_statistics()
+	def pull_interface_info(self, activeSession):
+		intConfig = self.pull_interface_config(activeSession)
+		intMac = self.pull_interface_mac_addresses(activeSession)
+		intStats = self.pull_interface_statistics(activeSession)
 
 		return intConfig, intMac, intStats
 
-	def pull_device_uptime(self):
+	def pull_device_uptime(self, activeSession):
 		command = 'show version | include uptime'
-		uptime = self.get_cmd_output(command)
+		uptime = self.get_cmd_output(command, activeSession)
 		for x in uptime:
 			output = x.split(' ', 3)[-1]
-		return outputoutput
+		return output
 
-	def pull_host_interfaces(self):
+	def pull_host_interfaces(self, activeSession):
+		output = []
+		outputResult = ''
 		command = "show interface status | xml"
-		result = self.run_ssh_command(command)
+		result = self.run_ssh_command(command, activeSession)
 
 		# Returns False if nothing was returned
 		if not result:
@@ -107,7 +110,7 @@ class CiscoNXOS(CiscoBaseDevice):
 
 		command = 'sh run int | egrep interface|ip.address | ex passive | ex !'
 
-		result = self.run_ssh_command(command)
+		result = self.run_ssh_command(command, activeSession)
 
 		# Set intStatus var to False initially
 		intStatus = 0
@@ -141,7 +144,11 @@ class CiscoNXOS(CiscoBaseDevice):
 		return self.split_on_newline(outputResult)
 
 	def count_interface_status(self, interfaces): #required
-		up, down, disabled, total = 0
+		up = 0
+		down = 0
+		disabled = 0
+		total = 0
+
 		for interface in interfaces:
 			if not 'Interface' in interface:
 				if 'disabled' in interface:
