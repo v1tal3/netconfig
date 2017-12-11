@@ -19,12 +19,13 @@ from scripts_bank import netboxAPI
 from redis import StrictRedis # http://blog.hackerearth.com/twitter-client-using-flask-redis
 from uuid import uuid4
 from device_classes.device_definitions.base_device import BaseDevice
+import time
 
 # Gets page referrer
 # referrer = request.headers.get("Referer")
 
 # Global Variables #
-ssh = {} # THIS GOES AWAY
+ssh = {}
 
 ###################
 # Logging - Begin #
@@ -76,7 +77,7 @@ def initialChecks():
                               title='Home')
 
 # Returns active SSH session for provided host if it exists.  Otherwise gets a session, stores it, and returns it
-def retrieveSSHSession(host): # THIS GOES AWAY
+def retrieveSSHSession(host):
     global ssh
 
     user_id = str(g.db.hget('users', session['USER']))
@@ -100,25 +101,25 @@ def retrieveSSHSession(host): # THIS GOES AWAY
 
 # Disconnect any SSH sessions for a specific host from all users
 def disconnectSpecificSSHSession(host):
-    for x in BaseDevice.ssh:
+    for x in BaseDevice.sshStore:
       # x is id-uuid
       y = x.split('--')
       # y[0] is host id, y[1] is uuid
       if int(y[0]) == int(host.id):
-        disconnectFromSSH(BaseDevice.ssh[x])
-        ssh = fn.removeDictKey(BaseDevice.ssh, x)
+        disconnectFromSSH(BaseDevice.sshStore[x])
+        BaseDevice.ssh = fn.removeDictKey(BaseDevice.sshStore, x)
         writeToLog('disconnected SSH session to provided host %s from user %s' % (host.hostname, session['USER']))
 
 # Disconnect all remaining active SSH sessions tied to a user
 def disconnectAllSSHSessions():
-    for x in BaseDevice.ssh:
+    for x in BaseDevice.sshStore:
         # x is id-uuid
         y = x.split('--')
         # y[0] is host id, y[1] is uuid
         if y[1] == str(session['UUID']):
             host = db_modifyDatabase.getHostByID(y[0])
-            disconnectFromSSH(BaseDevice.ssh[x])
-            BaseDevice.ssh = fn.removeDictKey(BaseDevice.ssh, x)
+            disconnectFromSSH(BaseDevice.sshStore[x])
+            BaseDevice.sshStore = fn.removeDictKey(BaseDevice.sshStore, x)
             writeToLog('disconnected SSH session to device %s for user %s' % (host.hostname, session['USER']))
     
     writeToLog('disconnected all SSH sessions for user %s' % (session['USER']))
@@ -126,7 +127,7 @@ def disconnectAllSSHSessions():
 # Returns number of active SSH sessions tied to user
 def countAllSSHSessions():
     i = 0
-    for x in BaseDevice.ssh:
+    for x in BaseDevice.sshStore:
         # x is id-uuid
         y = x.split('--')
         # y[0] is host id, y[1] is uuid
@@ -351,12 +352,16 @@ def viewSpecificHost(x):
       return ('', 204)
 
     host = db_modifyDatabase.getHostByID(x)
+
     #activeSession = retrieveSSHSession(host)
     writeToLog('accessed host %s' % (host.hostname))
 
-    interfaces = host.pull_host_interfaces()
+    # Get any existing SSH sessions
+    activeSession = retrieveSSHSession(host)
+
+    interfaces = host.pull_host_interfaces(activeSession)
     if interfaces:
-      upInt, downInt, disabledInt, totalInt = host.count_interface_status(interfaces)
+      upInt, downInt, disabledInt, totalInt = host.count_interface_status(interfaces, activeSession)
 
     # if interfaces is x.x.x.x skipped - connection timeout, throw error page redirect
     if fn.containsSkipped(interfaces) or not interfaces:
@@ -478,6 +483,10 @@ def resultsIntEnabled(x, y):
     # x = device id, y = interface name
     host = db_modifyDatabase.getHostByID(x)
 
+    #sshVar = retrieveSSHSession(host)
+    # THIS LINE ONLY WORKS IF ABOVE LINE IS EXECUTED FIRST??? #bbbbb
+    #result = ci.enableInterface(host.activeSession, interfaceReplaceSlash(y))
+    #time.sleep(1) # Also works if I delay by 1 second ?????
     # Removes dashes from interface in URL and enabel interface
     result = host.run_enable_interface_cmd(interfaceReplaceSlash(y))
 
@@ -492,15 +501,11 @@ def resultsIntEnabled(x, y):
 def resultsIntDisabled(x, y):
     initialChecks()
     # x = device id, y = interface name
-    host = db_modifyDatabase.getHostByID(x)#ddddd
+    host = db_modifyDatabase.getHostByID(x)
 
     # Removes dashes from interface in URL and disable interface
-    ##result = host.run_disable_interface_cmd(interfaceReplaceSlash(y))
-    # START ORIGINAL
-    activeSession = retrieveSSHSession(host)
-    y = interfaceReplaceSlash(y)
-    result = ci.disableInterface(activeSession, y)
-    # END ORIGINAL
+    result = host.run_disable_interface_cmd(interfaceReplaceSlash(y))
+
     writeToLog('disabled interface %s on host %s' % (y, host.hostname))
     return render_template("results/resultsinterfacedisabled.html",
                            host=host,

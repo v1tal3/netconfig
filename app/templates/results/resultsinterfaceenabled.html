@@ -18,11 +18,14 @@
 
 			<p><b>Here are the results:</b></p>
 
-			{% for x in result %}
-				{% if host.hostname in x %}
-					{{ x }}<br />
-				{% endif %}
-			{% endfor %}
+			<code>
+				{% for x in result %}
+					{% if x %}
+						{{ x }}<br />
+					{% endif %}
+				{% endfor %}
+			</code>
+
 		</div>
 	</div>
 	<div class="row">

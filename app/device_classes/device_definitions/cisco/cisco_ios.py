@@ -14,6 +14,10 @@ class CiscoIOS(CiscoBaseDevice):
 		command = 'show cdp neighbors | begin ID'
 		return command
 
+	def cmd_version(self):
+		command = 'show version'
+		return command
+
 	def pull_run_config(self): #required
 		command = self.cmd_run_config()
 		return self.get_cmd_output(command)
@@ -24,6 +28,11 @@ class CiscoIOS(CiscoBaseDevice):
 
 	def pull_cdp_neighbor(self): #required
 		command = self.cmd_cdp_neighbor()
+		return self.get_cmd_output(command)
+
+	def pull_version(self): #required
+		command = self.cmd_version()
+		print command
 		return self.get_cmd_output(command)
 
 	def pull_interface_config(self):

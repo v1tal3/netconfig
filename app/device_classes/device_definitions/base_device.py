@@ -3,7 +3,7 @@ from ...scripts_bank.lib import functions as fn
 from flask import g, session
 
 class BaseDevice(object):
-	ssh = {}
+	sshStore = {}
 
 	def __init__(self, id, hostname, ipv4_addr, type, ios_type):
 		self.id = id
@@ -12,10 +12,9 @@ class BaseDevice(object):
 		self.type = type
 		self.ios_type = ios_type
 		self.activeSession = self.retrieve_ssh_session()
-		self.interface = ''
 
 	def return_stored_ssh(self):
-		return ssh
+		return sshStore
 
 	def enter_config_mode(self):
 		self.activeSession.config_mode()
@@ -23,8 +22,8 @@ class BaseDevice(object):
 	def exit_config_mode(self):
 		self.activeSession.exit_config_mode()
 
-	def run_ssh_command(self, command):
-		return nfn.runSSHCommandInSession(command, self.activeSession)
+	def run_ssh_command(self, command, activeSession):
+		return nfn.runSSHCommandInSession(command, activeSession)
 
 	def run_ssh_config_commands(self, cmdList):
 		return nfn.runMultipleSSHConfigCommandsInSession(cmdList, self.activeSession)
@@ -60,28 +59,27 @@ class BaseDevice(object):
 
 	def find_prompt_in_session(self):
 		return nfn.findPromptInSession(self.activeSession)
-
+	
 	# Returns active SSH session for provided host (self) if it exists.  Otherwise gets a session, stores it, and returns it
 	def retrieve_ssh_session(self):
 		user_id = str(g.db.hget('users', session['USER']))
 		password = str(g.db.hget(str(user_id), 'pw'))
 		creds = fn.setUserCredentials(session['USER'], password)
-		#creds = fn.setUserCredentials(user, password)
 		# Store SSH Dict key as self.id followed by '-' followed by username
 		sshKey = str(self.id) + '--' + str(session['UUID'])
 
-		#if not self.ssh[sshKey]:
-		if sshKey not in self.ssh:
+		#if not self.sshStore[sshKey]:
+		if sshKey not in type(self).sshStore:
 			fn.writeToLog('initiated new SSH connection to %s' % (self.hostname))
 			# If no currently active SSH sessions, initiate a new one
-			self.ssh[sshKey] = nfn.getSSHSession(self.ios_type, self.ipv4_addr, creds)
+			type(self).sshStore[sshKey] = nfn.getSSHSession(self.ios_type, self.ipv4_addr, creds)
 		
 		# Run test to verify if socket connection is still open or not
-		if not nfn.sessionIsAlive(self.ssh[sshKey]):
+		if not nfn.sessionIsAlive(type(self).sshStore[sshKey]):
 			# If session is closed, reestablish session and log event
 			fn.writeToLog('reestablished SSH connection to %s' % (self.hostname))
-			self.ssh[sshKey] = nfn.getSSHSession(self.ios_type, self.ipv4_addr, creds)
+			type(self).sshStore[sshKey] = nfn.getSSHSession(self.ios_type, self.ipv4_addr, creds)
 
-		self.activeSession = self.ssh[sshKey]
-		return self.ssh[sshKey]
-		
+		self.activeSession = type(self).sshStore[sshKey]
+		return self.activeSession
+	

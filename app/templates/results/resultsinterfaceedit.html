@@ -18,16 +18,18 @@
 
 			<p><b>Here are the results:</b></p>
 
-			{% for x in result %}
-				{% if x and 'Enter configuration' not in x %}
-					{{ x }}<br />
-									{% if x == 'config term' %}
-										{{ host.hostname }}#config t<br />
-									{% else %}
-										{{ x }}<br />
-									{% endif %}
-				{% endif %}
-			{% endfor %}
+			<code>
+				{% for x in result %}
+					{% if x %}
+						{% if x == 'config term' %}
+							{{ host.hostname }}#config term<br />
+						{% else %}
+							{{ x }}<br />
+						{% endif %}
+					{% endif %}
+				{% endfor %}
+			</code>
+
 		</div>
 	</div>
 	<div class="row">
