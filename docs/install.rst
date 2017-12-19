@@ -105,48 +105,6 @@ Create symlink for netconfig file into nginx/sites-enabled
     sudo ln -s /etc/nginx/sites-available/netconfig /etc/nginx/sites-enabled
 
 
-
-Service
-^^^^^^^
-
-Create and fill out netconfig.service file
-
-.. code-block:: text
-
-    sudo touch /etc/systemd/system/netconfig.service
-    sudo vi /etc/systemd/system/netconfig.service
-
-*Contents of /etc/systemd/system/netconfig.service*
-"""""""""""""""""""""""""""""""""""""""""""""""""""
-
-.. code-block:: text
-  :linenos:
-
-    [Unit]
-    Description=uWSGI instance to serve NetConfig
-    After=network.target
-
-    [Service]
-    User=netconfig
-    Group=www-data
-    WorkingDirectory=/home/netconfig/netconfig
-    Environment="PATH=/usr/bin/python"
-    ExecStart=/usr/bin/uwsgi --ini netconfig.ini
-
-    [Install]
-    WantedBy=multi-user.target
-
-Start and Enable Netconfig services
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Start and enable services related to NetConfig running in the background
-
-.. code-block:: text
-
-    sudo systemctl daemon-reload
-    sudo systemctl start netconfig
-    sudo systemctl enable netconfig
-
 Supervisord Configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
