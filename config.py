@@ -34,5 +34,9 @@ DB_NO = 0
 LOGFILE = os.path.join(basedir, 'app/log/access.log')
 SYSLOGFILE = os.path.join(basedir, 'app/log/syslog.log')
 
+
+# Bootstrap configuration
+BOOTSTRAP_SERVE_LOCAL = True
+
 # Current version
 VERSION = '1.2.0 (beta)'
