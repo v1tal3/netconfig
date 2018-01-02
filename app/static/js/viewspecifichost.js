@@ -1,5 +1,22 @@
 $(document).ready(function() {
   $("#loadUptimeIcon").show();
+
+  // Start Uptime section
+  // Get ID of current device from URL, which are the numbers after the last '/'
+  var loc = location.href.substr(location.href.lastIndexOf('/') + 1);
+  console.log(loc);
+  $.ajax({
+    url: '/deviceuptime/' + loc,
+    success: function(data) {
+      var result = JSON.stringify(data); // Convert jsonify'd data from python
+      result = result.replace(/\"/g, "") // Remove double quotes from string
+      var divuptime = document.getElementById('hostUptime'); // Get DIV element from HTML page
+      divuptime.innerHTML = result; // Pass string to DIV on HTML page
+      $("#loadUptimeIcon").hide();
+    }
+  });
+  // End Uptime section
+
   var events = $('#events');
   var table = $('#tblViewSpecificHost').DataTable({
     "pageLength": 10,
@@ -43,10 +60,7 @@ $(document).ready(function() {
     });
     table.page.len(tableLength).draw();
 
-    // Replace all '/' in 'selectedInterfaces' with '_'
-    ///selectedInterfaces.replace('/', '_');
     // Gets host ID from current URL, aka everything after the last '/'
-    var loc = location.href.substr(location.href.lastIndexOf('/') + 1)
     var url = '/confirm/confirmmultipleintenable/' + loc + '/' // + selectedInterfaces
 
     for (var i in selectedInterfaces) {
@@ -78,10 +92,7 @@ $(document).ready(function() {
       selectedInterfaces.push(div.textContent || div.innerText || "");
     });
 
-    // Replace all '/' in 'selectedInterfaces' with '_'
-    ///selectedInterfaces.replace('/', '_');
     // Gets host ID from current URL, aka everything after the last '/'
-    var loc = location.href.substr(location.href.lastIndexOf('/') + 1)
     var url = '/confirm/confirmmultipleintdisable/' + loc + '/' // + selectedInterfaces
 
     for (var i in selectedInterfaces) {
@@ -111,10 +122,7 @@ $(document).ready(function() {
       selectedInterfaces.push(div.textContent || div.innerText || "");
     });
 
-    // Replace all '/' in 'selectedInterfaces' with '_'
-    ///selectedInterfaces.replace('/', '_');
     // Gets host ID from current URL, aka everything after the last '/'
-    var loc = location.href.substr(location.href.lastIndexOf('/') + 1);
     var url = '/confirm/confirmmultipleintedit/' + loc + '/' // + selectedInterfaces
 
     for (var i in selectedInterfaces) {
@@ -125,22 +133,6 @@ $(document).ready(function() {
     // /confirm/confirmmultipleintenable/[host.id]/&int1&int2&int3...etc
     window.location.href = url;
   });
-
-  // Start Uptime section
-  // Get ID of current device from URL, which are the numbers after the last '/'
-  var loc = location.href.substr(location.href.lastIndexOf('/') + 1);
-  console.log(loc);
-  $.ajax({
-    url: '/deviceuptime/' + loc,
-    success: function(data) {
-      var result = JSON.stringify(data); // Convert jsonify'd data from python
-      result = result.replace(/\"/g, "") // Remove double quotes from string
-      var divuptime = document.getElementById('hostUptime'); // Get DIV element from HTML page
-      divuptime.innerHTML = result; // Pass string to DIV on HTML page
-      $("#loadUptimeIcon").hide();
-    }
-  });
-  // End Uptime section
 
 });
 
