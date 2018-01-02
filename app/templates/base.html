@@ -23,17 +23,11 @@
     <div class="col-md-1">
     </div>
     <div class="col-md-11">
-      {% if session['USER'] or request.path == "/login" %}
-        {% block content %}{% endblock %}
-      {% else %}
-        {% include "/errors/notloggedin.html" %}
-      {% endif %}
+      {% block content %}{% endblock %}
     </div>
   </div>
 </div>
-{% if session['USER'] %}
-  {% include "/js/count_active_sessions_js.html" %}
-  {% endif %}
+
 {%block scripts %}
 <script src="{{url_for('static', filename='js/jquery-3.2.1.min.js')}}"></script>
 {{super()}}
@@ -41,5 +35,15 @@
 <script src="{{url_for('static', filename='js/loadingoverlay.min.js')}}"></script>
 <script src="{{url_for('static', filename='js/loading.js')}}"></script>
 <script src="{{url_for('static', filename='DataTables/datatables.min.js')}}"></script>
+{% if session['USER'] %}
+<script src="{{url_for('static', filename='js/countactivesessions.js')}}"></script>
+{% endif %}
+{% if request.path == "/db/viewhosts" or request.path == "/db/viewhosts/" %}
+<script src="{{url_for('static', filename='js/DataTablesCustom.js')}}"></script>
+{% endif %}
+{% if "/db/viewhosts/" in request.path %}
+<script src="{{url_for('static', filename='js/hostshell.js')}}"></script>
+<script src="{{url_for('static', filename='js/viewspecifichost.js')}}"></script>
+{% endif %}
 {% endblock %}
 {% endblock %}
