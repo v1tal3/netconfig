@@ -846,6 +846,7 @@ def modalSpecificInterfaceOnHost(x, y):
 
     intConfig, intMacHead, intMacBody, intStats = host.pull_interface_info(activeSession)
     macToIP = ''
+
     writeToLog('viewed interface %s on host %s' % (interface, host.hostname))
     return render_template("/viewspecificinterfaceonhost.html",
                            host=host,
@@ -889,32 +890,6 @@ def modalEditInterfaceOnHost(x, y):
                            interface=interface,
                            intConfig=intConfig,
                            form=form)
-
-
-# To show interface commands from host device
-@app.route('/modalinterfaceinfo/', methods=['GET', 'POST'])
-@app.route('/modalinterfaceinfo/<x>/<y>', methods=['GET', 'POST'])
-def modalInterfaceInfo(x, y):
-    """Display modal with interface info, stats, and MAC address table.
-
-    x = device id
-    y = interface name
-    """
-    initialChecks()
-
-    host = db_modifyDatabase.getHostByID(x)
-
-    activeSession = retrieveSSHSession(host)
-
-    # Removes dashes from interface in URL
-    interface = interfaceReplaceSlash(y)
-
-    intConfig = host.pull_interface_config(activeSession)
-
-    return render_template("/interfaceinfo.html",
-                           host=host,
-                           interface=interface,
-                           intConfig=intConfig)
 
 
 @app.route('/modalcmdshowrunconfig/', methods=['GET', 'POST'])
