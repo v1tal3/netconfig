@@ -17,6 +17,11 @@ class CiscoBaseDevice(BaseDevice):
         command = "config term"
         return command
 
+    def get_cmd_exit_configuration_mode(self):
+        """Return command for exiting configuration mode."""
+        command = "end"
+        return command
+
     def get_cmd_enable_interface(self):
         """Return command for enabling interface on device."""
         command = "no shutdown"
