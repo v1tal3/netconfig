@@ -637,26 +637,21 @@ def viewSpecificHost(x):
             activeSession = retrieveSSHSession(host)
             writeToLog('credentials used of currently logged in user for accessing host %s' % (host.hostname))
 
-    tableHeader, interfaces = host.pull_host_interfaces(activeSession)
+    result = host.pull_host_interfaces(activeSession)
 
-    if interfaces:
-        upInt, downInt, disabledInt, totalInt = host.count_interface_status(interfaces)
+    if result:
+        interfaces = host.count_interface_status(result)
 
-    # If interfaces is x.x.x.x skipped - connection timeout,
-    #  throw error page redirect
-    if fn.containsSkipped(interfaces) or not interfaces:
+        return render_template("/db/viewspecifichost.html",
+                               host=host,
+                               interfaces=interfaces,
+                               result=result)
+    else:
+        # If interfaces is x.x.x.x skipped - connection timeout,
+        #  throw error page redirect
         disconnectSpecificSSHSession(host)
         return redirect(url_for('noHostConnectError',
                                 host=host.hostname))
-    else:
-        return render_template("/db/viewspecifichost.html",
-                               host=host,
-                               tableHeader=tableHeader,
-                               interfaces=interfaces,
-                               upInt=upInt,
-                               downInt=downInt,
-                               disabledInt=disabledInt,
-                               totalInt=totalInt)
 
 
 @app.route('/calldisconnectspecificsshsession/<hostID>')

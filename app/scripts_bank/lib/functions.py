@@ -96,14 +96,6 @@ def rreplace(s, old, new, occurrence):
     return new.join(li)
 
 
-def replaceDoubleSpacesCommas(x):
-    """Return string with all double spaces removed, leaving only a single comma."""
-    x = x.replace("  ", ",,")
-    while ",," in x:
-        x = x.replace(",,", ",")
-    return x
-
-
 def indexLookup(x):
     """Index lookup for determining Cisco IOS type.
 
@@ -485,6 +477,7 @@ def md5VerifyOnDeviceWithSession(command, child):
     # Run for each line retreived from the md5 verification output
     for result in md5VerifyResult.split("\n"):
 
+        # TODO investigate just result.split()
         resultList = [x.strip() for x in result.split("  ")]
 
         # If first word in string is 'Verified', then it worked

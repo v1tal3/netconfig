@@ -109,12 +109,7 @@ class BaseDevice(object):
         Each array row is separated by newline.
         """
         result = self.run_ssh_command(command, activeSession)
-        result = self.replace_double_spaces_commas(result)
-        return result.splitlines()
-
-    def replace_double_spaces_commas(self, x):
-        """Replace all double spaces in provided string with a single comma."""
-        return fn.replaceDoubleSpacesCommas(x)
+        return result.replace("  ", ",").splitlines()
 
     def find_prompt_in_session(self, activeSession):
         """Return device prompt from existing SSH session."""

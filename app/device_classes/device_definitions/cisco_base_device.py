@@ -32,23 +32,30 @@ class CiscoBaseDevice(BaseDevice):
         command = "shutdown"
         return command
 
-    def cleanup_ios_output(self, x):
+    def cleanup_ios_output(self, input):
         """Clean up returned IOS output from 'show ip interface brief'."""
-        x = x.replace('OK?', '')
-        x = x.replace('Method', '')
-        x = x.replace('YES', '')
-        x = x.replace('NO', '')
-        x = x.replace('unset', '')
-        x = x.replace('NVRAM', '')
-        x = x.replace('IPCP', '')
-        x = x.replace('CONFIG', '')
-        x = x.replace('TFTP', '')
-        x = x.replace('manual', '')
-        x = self.replace_double_spaces_commas(x)
-        x = x.replace('down down', 'down,down')
-        x = x.replace(' unassigned', ',unassigned')
-        x = x.replace('unassigned ', 'unassigned,')
-        return x
+
+        data = []
+
+        for x in input.split('\n'):
+
+            try:
+                if x.split()[0] == "Interface":
+                    continue
+                else:
+
+                    interface = {}
+                    interface['name'] = x.split()[0]
+                    interface['address'] = x.split()[1]
+                    interface['ok'] = x.split()[2]
+                    interface['method'] = x.split()[3]
+                    interface['status'] = x.split()[4]
+                    interface['protocol'] = x.split()[5]
+                    data.append(interface)
+            except IndexError:
+                continue
+
+        return data
 
     def cleanup_nxos_output(self, x):
         """Clean up returned NX-OS output from 'show ip interface brief'."""
