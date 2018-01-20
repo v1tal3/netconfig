@@ -1,6 +1,5 @@
 import re
 from ..cisco_base_device import CiscoBaseDevice
-from ....scripts_bank.lib.functions import containsSkipped
 
 
 class CiscoIOS(CiscoBaseDevice):

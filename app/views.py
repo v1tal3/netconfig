@@ -21,7 +21,6 @@ from scripts_bank import ping_hosts as ph
 from scripts_bank.redis_logic import deleteUserInRedis, resetUserRedisExpireTimer, storeUserInRedis
 from scripts_bank.lib import functions as fn
 from scripts_bank.lib.flask_functions import checkUserLoggedInStatus
-from scripts_bank.lib.functions import readFromFile
 from scripts_bank.lib.netmiko_functions import disconnectFromSSH, getSSHSession
 from scripts_bank.lib.netmiko_functions import sessionIsAlive
 from scripts_bank.run_command import getCfgCmdOutput, getCmdOutputNoCR
@@ -192,7 +191,7 @@ def disconnectSpecificSSHSession(host):
         # y[1] is uuid
         if int(y[0]) == int(host.id):
             disconnectFromSSH(ssh[x])
-            ssh = fn.removeDictKey(ssh, x)
+            ssh.pop(x)
             writeToLog('disconnected SSH session to provided host %s from user %s' % (host.hostname, session['USER']))
 
 
@@ -208,7 +207,7 @@ def disconnectAllSSHSessions():
         if str(y[1]) == str(session['UUID']):
             disconnectFromSSH(ssh[x])
             host = db_modifyDatabase.getHostByID(y[0])
-            ssh = fn.removeDictKey(ssh, x)
+            ssh.pop(x)
             writeToLog('disconnected SSH session to device %s for user %s' % (host.hostname, y[1]))
 
     # Try statement needed as 500 error thrown if user is not currently logged in.
@@ -1475,8 +1474,10 @@ def editSettings():
     """Modify Netconfig settings."""
     initialChecks()
 
-    # Import contents of settings file
-    file = readFromFile(app.config['SETTINGSFILE'])
-    return render_template('/editsettings.html',
-                           title='Edit Netconfig settings',
-                           file=file)
+    try:
+        with open(app.config['SETTINGSFILE'], 'r') as s:
+            return render_template('/editsettings.html',
+                                   title='Edit Netconfig settings',
+                                   file=s.readlines())
+    except:
+        return render_template('errors/500.html', error="Unable to read Settings File"), 500

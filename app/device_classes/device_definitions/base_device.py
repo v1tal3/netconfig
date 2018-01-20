@@ -1,5 +1,4 @@
 from ...scripts_bank.lib import netmiko_functions as nfn
-from ...scripts_bank.lib import functions as fn
 
 
 class BaseDevice(object):

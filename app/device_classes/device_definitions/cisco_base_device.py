@@ -1,5 +1,5 @@
 from base_device import BaseDevice
-from ...scripts_bank.lib import functions as fn
+from ...scripts_bank.lib.functions import rreplace
 
 
 class CiscoBaseDevice(BaseDevice):
@@ -135,7 +135,7 @@ class CiscoBaseDevice(BaseDevice):
                     #  and not encounter an accidental infinite loop.
                     for a in lineSplit:
                         if nextWord:
-                            lineSplit[decrementCounter] = fn.rreplace(lineSplit[decrementCounter], ' ', ',', 1)
+                            lineSplit[decrementCounter] = rreplace(lineSplit[decrementCounter], ' ', ',', 1)
                             break
                         # If true, then the next word needs the last whitespace occurance replaced with a comma
                         if any(x in lineSplit[decrementCounter] for x in interfaceNames):
