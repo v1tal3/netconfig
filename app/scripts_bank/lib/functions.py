@@ -129,12 +129,6 @@ def stripLastChar(x):
     return x
 
 
-def stripAllAfterChar(x, y):
-    """Strip everything in string 'x' that comes after character 'y'."""
-    x = x.split(y, 1)[0]
-    return x
-
-
 def splitOnNewline(x):
     """Split string on newline, returns as array."""
     x = x.split('\n')
