@@ -37,11 +37,11 @@ def connectToSSH(host, creds):
     # Try to connect to the host
     try:
         if creds.priv:
-            ssh = nm.ConnectHandler(device_type=fn.stripNewline(host.ios_type), ip=fn.stripNewline(host.ipv4_addr), username=creds.un, password=creds.pw, secret=creds.priv)
+            ssh = nm.ConnectHandler(device_type=host.ios_type.strip(), ip=host.ipv4_addr.strip(), username=creds.un, password=creds.pw, secret=creds.priv)
             # Enter into enable mode
             ssh.enable()
         else:
-            ssh = nm.ConnectHandler(device_type=fn.stripNewline(host.ios_type), ip=fn.stripNewline(host.ipv4_addr), username=creds.un, password=creds.pw)
+            ssh = nm.ConnectHandler(device_type=host.ios_type.strip(), ip=host.ipv4_addr.strip(), username=creds.un, password=creds.pw)
 
     # except nm.AuthenticationException:
     #    return "%s skipped - authentication error\n" % (host)

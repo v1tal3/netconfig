@@ -117,13 +117,6 @@ def replaceSpacesWithUnderscore(x):
     return x
 
 
-def stripNewline(x):
-    """Return string with newline character removed (carriage return)."""
-    x = x.rstrip('\n')
-    x = x.rstrip('\r')
-    return x
-
-
 def stripWhiteSpace(x):
     """Return string with all white space removed."""
     x = x.rstrip(' ')
@@ -355,7 +348,7 @@ def convertMacFormatDec2Col(oldMac):
     Example: inputting 1234.56ab.cdef returns 12:34:56:AB:CD:EF.
     """
     # Strip any newlines from string
-    oldMac = stripNewline(oldMac)
+    oldMac = oldMac.strip()
     # Check var length.  If not equal to 14, return originally provided address.  Otherwise continue with conversion
     if len(oldMac) == 14:
         # Counter for 'for' loop
@@ -392,7 +385,7 @@ def convertMacFormatCol2Dec(oldMac):
     Example: inputting 12:34:56:AB:CD:EF returns 1234.56ab.cdef.
     """
     # Strip any newlines from string
-    oldMac = stripNewline(oldMac)
+    oldMac = oldMac.strip()
     # Verify MAC address formatting is correct for colon or hyphen delimited format
     if re.match("[0-9a-f]{2}([-:])[0-9a-f]{2}(\\1[0-9a-f]{2}){4}$", oldMac.lower()):
         # Counter for 'for' loop
@@ -435,7 +428,7 @@ def convertMacFormatText2Dec(oldMac):
     Example: inputting 123456ABCDEF returns 1234.56ab.cdef
     """
     # Strip any newlines from string
-    oldMac = stripNewline(oldMac)
+    oldMac = oldMac.strip()
     # Verify MAC address formatting is correct for colon or hyphen delimited format
     if re.match("[0-9a-f]{12}$", oldMac.lower()):
         # Counter for 'for' loop
@@ -503,7 +496,7 @@ def md5(fname):
 
 def removeCharFromString(oldString, character):
     """Remove all instances of a provided character from a string, then returns string."""
-    newString = oldString.replace(stripNewline(character), '')
+    newString = oldString.replace(character.strip(), '')
     return newString
 
 
