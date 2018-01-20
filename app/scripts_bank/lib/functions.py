@@ -96,30 +96,11 @@ def rreplace(s, old, new, occurrence):
     return new.join(li)
 
 
-def replaceDoubleSpaces(x):
-    """Return string with all double spaces removed, leaving only a single space."""
-    while "  " in x:
-        x = x.replace("  ", " ")
-    return x
-
-
 def replaceDoubleSpacesCommas(x):
     """Return string with all double spaces removed, leaving only a single comma."""
     x = x.replace("  ", ",,")
     while ",," in x:
         x = x.replace(",,", ",")
-    return x
-
-
-def replaceSpacesWithUnderscore(x):
-    """Return string with all spaces replaced with an underscore."""
-    x = x.replace(" ", "_")
-    return x
-
-
-def stripWhiteSpace(x):
-    """Return string with all white space removed."""
-    x = x.rstrip(' ')
     return x
 
 
@@ -480,38 +461,6 @@ def getFileSize(imageFileFullPath):
     """Return size of file in bytes."""
     size = os.path.getsize(imageFileFullPath)
     return int(size)
-'''
-# Try to lookup switch hostname via reverse DNS
-# If it fails, try to SSH in and pull the hostname via the switch config
-# Otherwise returns IP address provided if it fails
-def reverseDNSNetwork(host, creds):
-    try:
-        # Try host lookup via reverse DNS
-        hostNameList = socket.gethostbyaddr(host)
-    except socket.error, v:
-        # If it fails, pull hostname from switch config
-        hostNameList = sfn.runSSHCommand("show run | inc hostname", host, creds)
-        try:
-            # Try to parse hostname command from switch config to extra just the name
-            # Split command output by a single space (no args defaults to split by whitespace)
-            hostName = hostNameList.split()
-        except:
-            # If this doesn't work either, return as Unknown host
-            return host
-        # Return 2nd string from "show run | i hostname" command, which is just the name itself
-        return hostName[1]
-    # If reverse DNS lookup worked, continue from here
-    # Split hostName by ' symbol
-    hostNameFQDN = hostNameList[0].split("'")
-    # Split hostNameFQDN by . symbol
-    hostName = hostNameFQDN[0].split(".")
-    #
-    # Comment out the above line and return hostNameFQDN[0]
-    # if you want to include the domain name in the hostname (FQDN)
-    #
-    # Return hostname of IP address from reverse DNS lookup
-    return hostName[0]
-'''
 
 
 def reverseDNSEndpoint(host):
@@ -525,11 +474,8 @@ def reverseDNSEndpoint(host):
     except socket.error, v:
         # If it fails, return as a generic Endpoint
         return host
-    # If reverse DNS lookup worked, continue from here
-    # Split hostName by ' symbol
-    hostNameFQDN = hostNameList[0].split("'")
     # Return hostname of IP address from reverse DNS lookup
-    return hostNameFQDN[0]
+    return hostNameList[0].split("'")[0]
 
 
 def md5VerifyOnDeviceWithSession(command, child):
@@ -538,11 +484,8 @@ def md5VerifyOnDeviceWithSession(command, child):
 
     # Run for each line retreived from the md5 verification output
     for result in md5VerifyResult.split("\n"):
-        # Reduce all spacing to just a single space per section
-        result = replaceDoubleSpaces(result)
 
-        # Split string by spaces.  We are looking for the 4th field
-        resultList = result.split(" ")
+        resultList = [x.strip() for x in result.split("  ")]
 
         # If first word in string is 'Verified', then it worked
         if resultList[0] == "Verified":
