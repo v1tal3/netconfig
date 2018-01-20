@@ -1,6 +1,6 @@
 from app import app, db, models
 from sqlalchemy import asc, func
-from lib.ip_functions import validateIPAddress
+from netaddr import IPAddress, core
 import netboxAPI
 from ..device_classes import deviceType as dt
 
@@ -30,7 +30,9 @@ def importHostsToDB(csvImport):
             # Split array by comma's
             xArray = x.split(',')
             # 0 is hostname, 1 is IP address, 2 is device type, 3 is ios type
-            if not validateIPAddress(xArray[1]):
+            try:
+                IPAddress(xArray[1])
+            except core.AddrFormatError:
                 return False, "Invalid IP address for host %s - value entered: %s" % (xArray[0], xArray[1])
 
             if xArray[2].lower() not in ("switch", "router", "firewall"):
