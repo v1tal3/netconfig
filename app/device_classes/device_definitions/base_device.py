@@ -68,7 +68,7 @@ class BaseDevice(object):
     def run_multiple_commands(self, command, activeSession):
         """Execute multiple commands on device using existing SSH session."""
         newCmd = []
-        for x in self.split_on_newline(command):
+        for x in command.splitlines():
             newCmd.append(x)
         nfn.runMultipleSSHCommandsInSession(newCmd, activeSession)
 
@@ -81,7 +81,7 @@ class BaseDevice(object):
         Uses existing SSH session.
         """
         newCmd = []
-        for x in self.split_on_newline(command):
+        for x in command.splitlines():
             newCmd.append(x)
         # Get command output from network device
         result = nfn.runMultipleSSHConfigCommandsInSession(newCmd, activeSession)
@@ -90,10 +90,6 @@ class BaseDevice(object):
             result.append(x)
         return result
 
-    def split_on_newline(self, x):
-        """Split string into an array by each newline in string."""
-        return fn.splitOnNewline(x)
-
     def get_cmd_output(self, command, activeSession):
         """Get SSH command output and returns it as an array.
 
@@ -101,9 +97,8 @@ class BaseDevice(object):
         Stores and returns output in an array.
         Each array row is separated by newline.
         """
-        result = self.run_ssh_command(command,
-                                      activeSession)
-        return self.split_on_newline(result)
+        result = self.run_ssh_command(command, activeSession)
+        return result.splitlines()
 
     def get_cmd_output_with_commas(self, command, activeSession):
         """Execute command on device and replaces spaces with commas.
@@ -115,7 +110,7 @@ class BaseDevice(object):
         """
         result = self.run_ssh_command(command, activeSession)
         result = self.replace_double_spaces_commas(result)
-        return self.split_on_newline(result)
+        return result.splitlines()
 
     def replace_double_spaces_commas(self, x):
         """Replace all double spaces in provided string with a single comma."""

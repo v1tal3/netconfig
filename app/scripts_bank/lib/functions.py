@@ -123,18 +123,6 @@ def stripWhiteSpace(x):
     return x
 
 
-def stripLastChar(x):
-    """Strip last character from a string."""
-    x = x[:-1]
-    return x
-
-
-def splitOnNewline(x):
-    """Split string on newline, returns as array."""
-    x = x.split('\n')
-    return x
-
-
 def indexLookup(x):
     """Index lookup for determining Cisco IOS type.
 
@@ -363,10 +351,8 @@ def convertMacFormatDec2Col(oldMac):
             # Check if remainder is 0, if so insert colon. Don't insert colon if at the end of the list
             if (i % 2 == 0) and (i > 0):
                 newMac += ":"
-        # Strip last character from string.  In this case, the colon at the very end
-        newMac = stripLastChar(newMac)
         # Return converted MAC address in colon delimited format
-        return newMac.upper()
+        return newMac[:-1].upper()
     else:
         # Incorrect MAC format imported
         return oldMac
@@ -406,10 +392,8 @@ def convertMacFormatCol2Dec(oldMac):
                 newMac += "."
                 # Reset counter to 0
                 i = 0
-        # Strip last character from string.  In this case, the decimal at the very end
-        newMac = stripLastChar(newMac)
         # Return converted MAC address in decimal delimited format
-        return newMac.lower()
+        return newMac[:-1].lower()
     else:
         # Incorrect MAC format imported
         return oldMac
@@ -441,10 +425,8 @@ def convertMacFormatText2Dec(oldMac):
                 newMac += "."
                 # Reset counter to 0
                 i = 0
-        # Strip last character from string.  In this case, the decimal at the very end
-        newMac = stripLastChar(newMac)
         # Return converted MAC address in decimal delimited format
-        return newMac.lower()
+        return newMac[:-1].lower()
     else:
         # Incorrect MAC format imported
         return oldMac
