@@ -653,13 +653,13 @@ def viewSpecificHost(x):
                                 host=host))
 
 
-@app.route('/calldisconnectspecificsshsession/<hostID>')
-def callDisconnectSpecificSSHSession(hostID):
+@app.route('/calldisconnectspecificsshsession/<x>')
+def callDisconnectSpecificSSHSession(x):
     """Disconnect any SSH sessions for a specific host from all users.
 
-    hostID = ID of host to disconnect.
+    x = ID of host to disconnect.
     """
-    host = db_modifyDatabase.retrieveHostByID(hostID)
+    host = db_modifyDatabase.retrieveHostByID(x)
     # Disconnect device.
     try:
         disconnectSpecificSSHSession(host)
@@ -674,26 +674,26 @@ def callDisconnectSpecificSSHSession(hostID):
 ######################
 
 
-@app.route('/confirm/confirmintenable/<id>', methods=['GET', 'POST'])
-def confirmIntEnable(id):
+@app.route('/confirm/confirmintenable/<x>', methods=['GET', 'POST'])
+def confirmIntEnable(x):
     """Confirm enabling specific device interface before executing.
 
-    id = device id
+    x = device id
     """
-    host = db_modifyDatabase.getHostByID(id)
+    host = db_modifyDatabase.getHostByID(x)
     # Removes dashes from interface in URL
     return render_template("confirm/confirmintenable.html",
                            host=host,
                            interface=request.args.get('int', ''))
 
 
-@app.route('/confirm/confirmintdisable/<id>', methods=['GET', 'POST'])
-def confirmIntDisable(id):
+@app.route('/confirm/confirmintdisable/<x>', methods=['GET', 'POST'])
+def confirmIntDisable(x):
     """Confirm disabling specific device interface before executing.
 
-    id = device id
+    x = device id
     """
-    host = db_modifyDatabase.getHostByID(id)
+    host = db_modifyDatabase.getHostByID(x)
     # Removes dashes from interface in URL
     return render_template("confirm/confirmintdisable.html",
                            host=host,
@@ -701,19 +701,18 @@ def confirmIntDisable(id):
 
 
 @app.route('/confirm/confirmhostdelete/', methods=['GET', 'POST'])
-@app.route('/confirm/confirmhostdelete/<id>', methods=['GET', 'POST'])
-def confirmHostDelete(id):
+@app.route('/confirm/confirmhostdelete/<x>', methods=['GET', 'POST'])
+def confirmHostDelete(x):
     """Confirm deleting device interface from local database.
 
-    id = device ID
+    x = device ID
     """
-    host = db_modifyDatabase.getHostByID(id)
+    host = db_modifyDatabase.getHostByID(x)
     return render_template("confirm/confirmhostdelete.html",
                            host=host)
 
 
 @app.route('/confirm/confirmintedit/', methods=['POST'])
-@app.route('/confirm/confirmintedit/<x>/<y>', methods=['POST'])
 def confirmIntEdit():
     """Confirm settings to edit device interface with before executing."""
     hostid = request.form['hostid']
@@ -1019,13 +1018,11 @@ def modalSpecificInterfaceOnHost(x, y):
                            intStats=intStats)
 
 
-@app.route('/modaleditinterface/', methods=['GET', 'POST'])
-@app.route('/modaleditinterface/<x>/<y>', methods=['GET', 'POST'])
-def modalEditInterfaceOnHost(x, y):
+@app.route('/modaleditinterface/<x>', methods=['GET', 'POST'])
+def modalEditInterfaceOnHost(x):
     """Display modal to edit specific interface on device.
 
     x = device id
-    y = interface name
     """
     initialChecks()
 
@@ -1034,21 +1031,24 @@ def modalEditInterfaceOnHost(x, y):
     activeSession = retrieveSSHSession(host)
 
     # Removes dashes from interface in URL
-    interface = interfaceReplaceSlash(y)
+    # interface = interfaceReplaceSlash(y)
     # Replace's '=' with '.'
-    host.interface = interface.replace('=', '.')
+    # host.interface = interface.replace('=', '.')
+
+    # Set interface to passed parameter in URL
+    host.interface = request.args.get('int', '')
 
     intConfig = host.pull_interface_config(activeSession)
     # Edit form
-    form = EditInterfaceForm(request.values, host=host, interface=interface)
+    form = EditInterfaceForm(request.values, host=host, interface=host.interface)
 
     if form.validate_on_submit():
-        flash('Interface to edit - "%s"' % (interface))
+        flash('Interface to edit - "%s"' % (host.interface))
         return redirect('/confirm/confirmintedit')
 
     return render_template("/editinterface.html",
                            hostid=host.id,
-                           interface=interface,
+                           interface=host.interface,
                            intConfig=intConfig,
                            form=form)
 
