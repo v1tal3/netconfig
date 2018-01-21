@@ -717,7 +717,7 @@ def confirmIntEdit():
     """Confirm settings to edit device interface with before executing."""
     hostid = request.form['hostid']
     host = db_modifyDatabase.getHostByID(hostid)
-    interface = request.form['interface']
+    hostinterface = request.form['hostinterface']
     datavlan = request.form['datavlan']
     voicevlan = request.form['voicevlan']
     other = request.form['other']
@@ -725,7 +725,7 @@ def confirmIntEdit():
 
     return render_template("confirm/confirmintedit.html",
                            host=host,
-                           interface=interface,
+                           hostinterface=hostinterface,
                            datavlan=datavlan,
                            voicevlan=voicevlan,
                            other=other,
@@ -872,14 +872,13 @@ def resultsIntDisabled(x, y):
 
 
 @app.route('/results/resultsinterfaceedit/', methods=['GET', 'POST'])
-@app.route('/results/resultsinterfaceedit/<x>/<y>/<datavlan>/<voicevlan>/<other>', methods=['GET', 'POST'])
-def resultsIntEdit(x, y, datavlan, voicevlan, other):
+@app.route('/results/resultsinterfaceedit/<x>/<datavlan>/<voicevlan>/<other>', methods=['GET', 'POST'])
+def resultsIntEdit(x, datavlan, voicevlan, other):
     """Display results for editing specific interface config settings.
 
     x = device id
-    y = interface name
     d = data vlan
-    v = voice vlan
+    v = voice vlandddd
     o = other
     """
     initialChecks()
@@ -887,6 +886,9 @@ def resultsIntEdit(x, y, datavlan, voicevlan, other):
     host = db_modifyDatabase.getHostByID(x)
 
     activeSession = retrieveSSHSession(host)
+
+    # Get interface from passed variabel in URL
+    hostinterface = request.args.get('int', '')
 
     # Decode 'other' string
     other = unquote_plus(other).decode('utf-8')
@@ -898,12 +900,12 @@ def resultsIntEdit(x, y, datavlan, voicevlan, other):
     other = other.replace('\r\n', '\n')
 
     # Remove dashes from interface in URL and edit interface config
-    result = host.run_edit_interface_cmd(interfaceReplaceSlash(y), datavlan, voicevlan, other, activeSession)
+    result = host.run_edit_interface_cmd(hostinterface, datavlan, voicevlan, other, activeSession)
 
-    writeToLog('edited interface %s on host %s' % (y, host.hostname))
+    writeToLog('edited interface %s on host %s' % (hostinterface, host.hostname))
     return render_template("results/resultsinterfaceedit.html",
                            host=host,
-                           interface=y,
+                           interface=hostinterface,
                            datavlan=datavlan,
                            voicevlan=voicevlan,
                            other=other,
@@ -1030,7 +1032,7 @@ def modalEditInterfaceOnHost(x):
 
     activeSession = retrieveSSHSession(host)
 
-    # Removes dashes from interface in URL
+    # Removes dashes from interface in URLdddd
     # interface = interfaceReplaceSlash(y)
     # Replace's '=' with '.'
     # host.interface = interface.replace('=', '.')
@@ -1041,6 +1043,7 @@ def modalEditInterfaceOnHost(x):
     intConfig = host.pull_interface_config(activeSession)
     # Edit form
     form = EditInterfaceForm(request.values, host=host, interface=host.interface)
+    print host.interface
 
     if form.validate_on_submit():
         flash('Interface to edit - "%s"' % (host.interface))
@@ -1048,7 +1051,7 @@ def modalEditInterfaceOnHost(x):
 
     return render_template("/editinterface.html",
                            hostid=host.id,
-                           interface=host.interface,
+                           hostinterface=host.interface,
                            intConfig=intConfig,
                            form=form)
 
