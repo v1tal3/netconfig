@@ -39,9 +39,8 @@ class CiscoNXOS(CiscoBaseDevice):
         This should be redone using XML pulls/parsing.
         """
         command = self.cmd_cdp_neighbor()
-        result = self.get_cmd_output_with_commas(command, activeSession)
-        tableHeader, tableBody = self.cleanup_cdp_neighbor_output(result)
-        return tableHeader, tableBody
+        result = self.get_cmd_output(command, activeSession)
+        return self.cleanup_cdp_neighbor_output(result)
 
     def pull_interface_config(self, activeSession):
         """Retrieve configuration for interface on device."""
@@ -103,10 +102,7 @@ class CiscoNXOS(CiscoBaseDevice):
     def pull_device_uptime(self, activeSession):
         """Retrieve device uptime."""
         command = 'show version | include uptime'
-        uptime = self.get_cmd_output(command, activeSession)
-        for x in uptime:
-            output = x.split(' ', 3)[-1]
-        return output
+        return self.get_cmd_output(command, activeSession).split("is")[1]
 
     def pull_host_interfaces(self, activeSession):
         """Retrieve list of interfaces on device."""

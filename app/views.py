@@ -1127,12 +1127,12 @@ def modalCmdShowCDPNeigh(x):
 
     host = db_modifyDatabase.getHostByID(x)
     activeSession = retrieveSSHSession(host)
-    tableHeader, tableBody = host.pull_cdp_neighbor(activeSession)
+    neigh = host.pull_cdp_neighbor(activeSession)
+    print(neigh)
     writeToLog('viewed CDP neighbors via button on host %s' % (host.hostname))
     return render_template("/cmdshowcdpneigh.html",
                            host=host,
-                           tableHeader=tableHeader,
-                           tableBody=tableBody)
+                           neigh=neigh)
 
 
 @app.route('/modalcmdshowinventory/', methods=['GET', 'POST'])

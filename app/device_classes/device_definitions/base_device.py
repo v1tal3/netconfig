@@ -96,8 +96,7 @@ class BaseDevice(object):
         Stores and returns output in an array.
         Each array row is separated by newline.
         """
-        result = self.run_ssh_command(command, activeSession)
-        return result.splitlines()
+        return self.run_ssh_command(command, activeSession).strip()
 
     def get_cmd_output_with_commas(self, command, activeSession):
         """Execute command on device and replaces spaces with commas.
