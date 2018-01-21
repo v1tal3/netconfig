@@ -30,8 +30,16 @@ class TestCiscoASA(unittest.TestCase):
 
     def test_count_interface_status(self):
 
-        cleanup_output = self.device.cleanup_ios_output(self.ios_output)
+        input_data = [{'status': 'up', 'ok': 'YES', 'name': 'Vlan1',
+                       'address': '192.168.2.250', 'protocol': 'up',
+                       'method': 'DHCP'},
+                      {'status': 'up', 'ok': 'YES', 'name': 'FastEthernet0/1',
+                       'address': 'unassigned', 'protocol': 'up',
+                       'method': 'unset'},
+                      {'status': 'administratively', 'ok': 'YES',
+                       'name': 'FastEthernet0/2', 'address': 'unassigned',
+                               'protocol': 'down', 'method': 'unset'}]
 
-        comparision = {'down': 0, 'disabled': 1, 'up': 2}
+        comparision = {'down': 0, 'disabled': 1, 'up': 2, 'total': 3}
 
-        assert self.device.count_interface_status(cleanup_output) == comparision
+        assert self.device.count_interface_status(input_data) == comparision
