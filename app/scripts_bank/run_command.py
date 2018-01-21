@@ -11,7 +11,7 @@ def getCmdOutput(ssh, command):
     result = nfn.runSSHCommandInSession(command, ssh)
 
     # Split output by newline
-    output = result.split('\n')
+    output = result.splitlines()
 
     # Return config
     return output
@@ -19,16 +19,9 @@ def getCmdOutput(ssh, command):
 
 def getCmdOutputNoCR(ssh, command):
     """Get command output from host by provided IP address without submitting a Carriage Return at the end."""
-    output = []
-
-    # Get command output from network device
-    result = nfn.runSSHCommandInSessionNoCR(command, ssh)
-
-    # Split output by newline
-    output = result.split('\n')
 
     # Return config
-    return output
+    return nfn.runSSHCommandInSessionNoCR(command, ssh)
 
 
 def getCfgCmdOutput(ssh, command):
@@ -39,7 +32,7 @@ def getCfgCmdOutput(ssh, command):
     result = nfn.runSSHCfgCommandInSession(command, ssh)
 
     # Split output by newline
-    output = result.split('\n')
+    output = result.splitlines()
 
     # Remove first item in list, as Netmiko returns the command ran only in the output
     output.pop(0)

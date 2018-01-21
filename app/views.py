@@ -674,46 +674,40 @@ def callDisconnectSpecificSSHSession(hostID):
 ######################
 
 
-@app.route('/confirm/confirmintenable/', methods=['GET', 'POST'])
-@app.route('/confirm/confirmintenable/<x>/<y>', methods=['GET', 'POST'])
-def confirmIntEnable(x, y):
+@app.route('/confirm/confirmintenable/<id>', methods=['GET', 'POST'])
+def confirmIntEnable(id):
     """Confirm enabling specific device interface before executing.
 
-    x = device id
-    y = interface name
+    id = device id
     """
-    host = db_modifyDatabase.getHostByID(x)
+    host = db_modifyDatabase.getHostByID(id)
     # Removes dashes from interface in URL
-    y = interfaceReplaceSlash(y)
     return render_template("confirm/confirmintenable.html",
                            host=host,
-                           interface=y)
+                           interface=request.args.get('int', ''))
 
 
-@app.route('/confirm/confirmintdisable/', methods=['GET', 'POST'])
-@app.route('/confirm/confirmintdisable/<x>/<y>', methods=['GET', 'POST'])
-def confirmIntDisable(x, y):
+@app.route('/confirm/confirmintdisable/<id>', methods=['GET', 'POST'])
+def confirmIntDisable(id):
     """Confirm disabling specific device interface before executing.
 
-    x = device id
-    y = interface name
+    id = device id
     """
-    host = db_modifyDatabase.getHostByID(x)
+    host = db_modifyDatabase.getHostByID(id)
     # Removes dashes from interface in URL
-    y = interfaceReplaceSlash(y)
     return render_template("confirm/confirmintdisable.html",
                            host=host,
-                           interface=y)
+                           interface=request.args.get('int', ''))
 
 
 @app.route('/confirm/confirmhostdelete/', methods=['GET', 'POST'])
-@app.route('/confirm/confirmhostdelete/<x>', methods=['GET', 'POST'])
-def confirmHostDelete(x):
+@app.route('/confirm/confirmhostdelete/<id>', methods=['GET', 'POST'])
+def confirmHostDelete(id):
     """Confirm deleting device interface from local database.
 
-    x = device ID
+    id = device ID
     """
-    host = db_modifyDatabase.getHostByID(x)
+    host = db_modifyDatabase.getHostByID(id)
     return render_template("confirm/confirmhostdelete.html",
                            host=host)
 
@@ -1127,12 +1121,12 @@ def modalCmdShowCDPNeigh(x):
 
     host = db_modifyDatabase.getHostByID(x)
     activeSession = retrieveSSHSession(host)
-    tableHeader, tableBody = host.pull_cdp_neighbor(activeSession)
+    neigh = host.pull_cdp_neighbor(activeSession)
+    print(neigh)
     writeToLog('viewed CDP neighbors via button on host %s' % (host.hostname))
     return render_template("/cmdshowcdpneigh.html",
                            host=host,
-                           tableHeader=tableHeader,
-                           tableBody=tableBody)
+                           neigh=neigh)
 
 
 @app.route('/modalcmdshowinventory/', methods=['GET', 'POST'])
@@ -1254,20 +1248,17 @@ def hostShellOutput(x, m, y):
     """
     initialChecks()
 
-    output = []
+    # output = []
     configError = False
 
     host = db_modifyDatabase.getHostByID(x)
     activeSession = retrieveSSHSession(host)
 
-    # Decode command in URL received from javascript
-    command = unquote_plus(y).decode('utf-8')
-
     # Replace '_' with '/'
-    command = interfaceReplaceSlash(command)
+    command = interfaceReplaceSlash(unquote_plus(y).decode('utf-8'))
 
     # Append prompt and command executed to beginning of output
-    output.append(host.find_prompt_in_session(activeSession) + command)
+    # output.append(host.find_prompt_in_session(activeSession) + command)
 
     # Check if last character is a '?'
     if command[-1] == '?':
@@ -1276,23 +1267,13 @@ def hostShellOutput(x, m, y):
             # Insert list contents into 'output' list.
             configError = True
         else:
-            # Get command output as a list.
-            # Insert list contents into 'output' list.
-            output.extend(getCmdOutputNoCR(activeSession, command))
-            # Append prompt and command executed to end of output
-            output.append(host.find_prompt_in_session(activeSession))
+            output = getCmdOutputNoCR(activeSession, command)
 
     else:
         if m == 'c':
-            # Get command output as a list.
-            # Insert list contents into 'output' list.
-            output.extend(getCfgCmdOutput(activeSession, command))
+            output = getCfgCmdOutput(activeSession, command)
         else:
-            # Get command output as a list.
-            # Insert list contents into 'output' list.
-            output.extend(host.get_cmd_output(command, activeSession))
-            # Append prompt and command executed to end of output.
-            output.append(host.find_prompt_in_session(activeSession))
+            output = host.get_cmd_output(command, activeSession)
 
     writeToLog('ran command on host %s - %s' % (host.hostname, command))
 

@@ -33,9 +33,8 @@ class CiscoIOS(CiscoBaseDevice):
     def pull_cdp_neighbor(self, activeSession):
         """Retrieve CDP/LLDP neighbor information from device."""
         command = self.cmd_cdp_neighbor()
-        result = self.get_cmd_output_with_commas(command, activeSession)
-        tableHeader, tableBody = self.cleanup_cdp_neighbor_output(result)
-        return tableHeader, tableBody
+        result = self.get_cmd_output(command, activeSession)
+        return self.cleanup_cdp_neighbor_output(result)
 
     def pull_interface_config(self, activeSession):
         """Retrieve configuration for interface on device."""
@@ -66,8 +65,7 @@ class CiscoIOS(CiscoBaseDevice):
             # In IOS-XE, there are multiple protocols separated by commas.
             # Separate these by underscores instead to preserve formatting in HTML output
             result = result.replace(',', '_')
-            result = self.replace_double_spaces_commas(result)
-            result = self.split_on_newline(result)
+            result = self.replace_double_spaces_commas(result).splitlines()
 
             for index, line in enumerate(result):
                 # This is primarily for IOS-XE devices.  We only want Unicast Entries
@@ -121,10 +119,7 @@ class CiscoIOS(CiscoBaseDevice):
     def pull_device_uptime(self, activeSession):
         """Retrieve device uptime."""
         command = 'show version | include uptime'
-        uptime = self.get_cmd_output(command, activeSession)
-        for x in uptime:
-            output = x.split(' ', 3)[-1]
-        return output
+        return self.get_cmd_output(command, activeSession).split("is")[1]
 
     def pull_host_interfaces(self, activeSession):
         """Retrieve list of interfaces on device."""
