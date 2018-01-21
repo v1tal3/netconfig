@@ -3,7 +3,8 @@ Flask-Bootstrap==3.3.7.1
 Flask-Script==2.0.6
 Flask-SQLAlchemy==2.3.2
 Flask-WTF==0.14.2
+netaddr==0.7.19
 netmiko==2.0.1
 redis==2.10.6
+sqlalchemy-migrate==0.11.0
 WTForms==2.1
-netaddr==0.7.19
