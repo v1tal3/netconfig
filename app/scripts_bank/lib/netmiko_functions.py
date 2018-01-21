@@ -83,8 +83,6 @@ def runMultipleSSHCommandsWithCmdHead(cmdList, host, creds):
         result.append("Command: %s" % x)
         # Get command output from multiple commands configured on device
         result.append(ssh.send_command(x))
-        # Split by newlines
-        # output = result.split('\n')
     # Disconnect from SSH session
     disconnectFromSSH(ssh)
     # Return output of command
@@ -160,7 +158,7 @@ def runExitConfigModeInSession(ssh):
 def runMultipleSSHConfigCommandsInSession(cmdList, ssh):
     """Run multiple commands in list on host via SSH and returns all output from applying the config."""
     # Get command output from multiple commands configured on device
-    return ssh.send_config_set(cmdList).split('\n')
+    return ssh.send_config_set(cmdList).splitlines()
 
 
 def findPromptInSession(ssh):

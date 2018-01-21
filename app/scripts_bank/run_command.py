@@ -11,7 +11,7 @@ def getCmdOutput(ssh, command):
     result = nfn.runSSHCommandInSession(command, ssh)
 
     # Split output by newline
-    output = result.split('\n')
+    output = result.splitlines()
 
     # Return config
     return output
@@ -32,7 +32,7 @@ def getCfgCmdOutput(ssh, command):
     result = nfn.runSSHCfgCommandInSession(command, ssh)
 
     # Split output by newline
-    output = result.split('\n')
+    output = result.splitlines()
 
     # Remove first item in list, as Netmiko returns the command ran only in the output
     output.pop(0)

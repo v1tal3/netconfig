@@ -78,9 +78,9 @@
 									<td> {{ x.status }} </td>
 									<td> {{ x.protocol }} </td>
 									<td>
-										<a href="/confirm/confirmintenable/{{ host.id }}/{{ x.name }}" class="btn btn-xs btn-success" title="Enable Interface"><i class="glyphicon glyphicon-arrow-up" aria-hidden="true"></i></a>
+										<a href="/confirm/confirmintenable/{{ host.id }}?int={{ x.name }}" class="btn btn-xs btn-success" title="Enable Interface"><i class="glyphicon glyphicon-arrow-up" aria-hidden="true"></i></a>
 										<a href="modalEditInterface" data-toggle="modal" data-target="#modalEditInterface" class="btn btn-xs btn-warning" data-interface="{{ x.name }}" data-hostid="{{ host.id }}" title="Edit Interface"><i class="glyphicon glyphicon-pencil" aria-hidden="true"></i></a>
-										<a href="/confirm/confirmintdisable/{{ host.id }}/{{ x.name }}" class="btn btn-xs btn-danger" title="Disable Interface"><i class="glyphicon glyphicon-arrow-down" aria-hidden="true"></i></a>&nbsp;
+										<a href="/confirm/confirmintdisable/{{ host.id }}?int={{ x.name }}" class="btn btn-xs btn-danger" title="Disable Interface"><i class="glyphicon glyphicon-arrow-down" aria-hidden="true"></i></a>&nbsp;
 										<a href="modalConfigInterface" data-toggle="modal" data-target="#modalConfigInterface" class="btn btn-xs btn-info" data-interface="{{ x.name }}" data-hostid="{{ host.id }}" title="Interface Info" onclick="loading();return false;"><i class="glyphicon glyphicon-info-sign" aria-hidden="true"></i></a>
 									</td>
 								</tr>

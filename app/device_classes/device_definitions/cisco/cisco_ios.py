@@ -65,8 +65,7 @@ class CiscoIOS(CiscoBaseDevice):
             # In IOS-XE, there are multiple protocols separated by commas.
             # Separate these by underscores instead to preserve formatting in HTML output
             result = result.replace(',', '_')
-            result = self.replace_double_spaces_commas(result)
-            result = self.split_on_newline(result)
+            result = self.replace_double_spaces_commas(result).splitlines()
 
             for index, line in enumerate(result):
                 # This is primarily for IOS-XE devices.  We only want Unicast Entries

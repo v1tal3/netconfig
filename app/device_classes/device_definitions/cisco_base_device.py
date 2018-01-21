@@ -37,7 +37,7 @@ class CiscoBaseDevice(BaseDevice):
 
         data = []
 
-        for x in input.split('\n'):
+        for x in input.splitlines():
 
             try:
                 if x.split()[0] == "Interface":
@@ -59,6 +59,9 @@ class CiscoBaseDevice(BaseDevice):
 
     def cleanup_nxos_output(self, x):
         """Clean up returned NX-OS output from 'show ip interface brief'."""
+
+        # TODO cleanup like cleanup_ios_output
+
         x = x.replace(' connected', ',connected')
         x = x.replace('connected ', 'connected,')
         x = x.replace(' sfpAbsent', ',sfpAbsent')
@@ -81,7 +84,7 @@ class CiscoBaseDevice(BaseDevice):
         data = []
 
         print(result)
-        for x in result.split('\n'):
+        for x in result.splitlines():
             try:
                 if x.split()[0] == "Device":
                     continue

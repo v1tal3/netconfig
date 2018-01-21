@@ -25,7 +25,7 @@ def importHostsToDB(csvImport):
     Format: Hostname,IPAddress,DeviceType,IOSType
     """
     # For each line in csvImport, run validation checks
-    for x in csvImport.split('\n'):
+    for x in csvImport.splitlines():
         if x:
             # Split array by comma's
             xArray = x.split(',')
@@ -42,7 +42,7 @@ def importHostsToDB(csvImport):
                 return False, "Invalid IOS type for host %s - value entered: %s" % (xArray[0], xArray[3])
 
     # Each line has been validated, so import all lines into DB
-    for x in csvImport.split('\n'):
+    for x in csvImport.splitlines():
         if x:
             # Split array by comma's
             xArray = x.split(',')
