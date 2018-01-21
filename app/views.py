@@ -1247,7 +1247,6 @@ def hostShellOutput(x, m, y):
     """
     initialChecks()
 
-    # output = []
     configError = False
 
     host = db_modifyDatabase.getHostByID(x)

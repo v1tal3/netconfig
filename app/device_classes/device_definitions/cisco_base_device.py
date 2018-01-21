@@ -77,19 +77,18 @@ class CiscoBaseDevice(BaseDevice):
         """Clean up returned 'show cdp neighbor' output."""
         data = []
 
-        print(result)
-        for x in result.splitlines():
+        for x in result:
             try:
                 if x.split()[0] == "Device":
                     continue
                 else:
                     interface = {}
-                    interface['device_id'] = x.split()[0]
-                    interface['local_iface'] = x.split()[1] + x.split()[2]
+                    interface['device_id'] = x.split()[0] + x.split()[1]
+                    interface['local_iface'] = x.split()[2]
                     interface['hold_time'] = x.split()[3]
                     interface['capability'] = x.split()[4]
                     interface['platform'] = x.split()[5]
-                    interface['port_id'] = x.split()[6]
+                    interface['port_id'] = x.split()[6] + x.split()[7]
                     data.append(interface)
             except IndexError:
                 continue
