@@ -1254,20 +1254,17 @@ def hostShellOutput(x, m, y):
     """
     initialChecks()
 
-    output = []
+    # output = []
     configError = False
 
     host = db_modifyDatabase.getHostByID(x)
     activeSession = retrieveSSHSession(host)
 
-    # Decode command in URL received from javascript
-    command = unquote_plus(y).decode('utf-8')
-
     # Replace '_' with '/'
-    command = interfaceReplaceSlash(command)
+    command = interfaceReplaceSlash(unquote_plus(y).decode('utf-8'))
 
     # Append prompt and command executed to beginning of output
-    output.append(host.find_prompt_in_session(activeSession) + command)
+    # output.append(host.find_prompt_in_session(activeSession) + command)
 
     # Check if last character is a '?'
     if command[-1] == '?':
@@ -1276,23 +1273,13 @@ def hostShellOutput(x, m, y):
             # Insert list contents into 'output' list.
             configError = True
         else:
-            # Get command output as a list.
-            # Insert list contents into 'output' list.
-            output.extend(getCmdOutputNoCR(activeSession, command))
-            # Append prompt and command executed to end of output
-            output.append(host.find_prompt_in_session(activeSession))
+            output = getCmdOutputNoCR(activeSession, command)
 
     else:
         if m == 'c':
-            # Get command output as a list.
-            # Insert list contents into 'output' list.
-            output.extend(getCfgCmdOutput(activeSession, command))
+            output = getCfgCmdOutput(activeSession, command)
         else:
-            # Get command output as a list.
-            # Insert list contents into 'output' list.
-            output.extend(host.get_cmd_output(command, activeSession))
-            # Append prompt and command executed to end of output.
-            output.append(host.find_prompt_in_session(activeSession))
+            output = host.get_cmd_output(command, activeSession)
 
     writeToLog('ran command on host %s - %s' % (host.hostname, command))
 

@@ -2,6 +2,8 @@ from app import app
 from urllib2 import urlopen
 from json import load
 
+# TODO refactor with requests
+
 
 class NetboxHost(object):
     """Class for storing device information pulled from Netbox via API calls."""
