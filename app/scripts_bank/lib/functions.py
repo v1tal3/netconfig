@@ -52,25 +52,16 @@ def setUserCredentials(username, password, privPassword=''):
     return creds
 
 
-def rreplace(s, old, new, occurrence):
-    """Replace last occurence of character in string.
-
-    s is string original string.
-    old is the character to be replaced.
-    new is the character to be used instead of old character.
-    occurence is how many occurrence's to replace, starting from the end.
-    """
-    li = s.rsplit(old, occurrence)
-    return new.join(li)
-
-
 def containsSkipped(x):
     """Return if the word 'skipped' is in the provided string.
 
     Returns True if string contains the word "skipped".
     Returns False otherwise.
     """
-    if "skipped" in x:
-        return True
-    else:
+    try:
+        if "skipped" in str(x):
+            return True
+        else:
+            return False
+    except:
         return False

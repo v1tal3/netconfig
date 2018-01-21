@@ -650,7 +650,7 @@ def viewSpecificHost(x):
         #  throw error page redirect
         disconnectSpecificSSHSession(host)
         return redirect(url_for('noHostConnectError',
-                                host=host.hostname))
+                                host=host))
 
 
 @app.route('/calldisconnectspecificsshsession/<hostID>')
@@ -1122,7 +1122,6 @@ def modalCmdShowCDPNeigh(x):
     host = db_modifyDatabase.getHostByID(x)
     activeSession = retrieveSSHSession(host)
     neigh = host.pull_cdp_neighbor(activeSession)
-    print(neigh)
     writeToLog('viewed CDP neighbors via button on host %s' % (host.hostname))
     return render_template("/cmdshowcdpneigh.html",
                            host=host,

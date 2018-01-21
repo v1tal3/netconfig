@@ -1,5 +1,4 @@
 from base_device import BaseDevice
-from ...scripts_bank.lib.functions import rreplace
 
 
 class CiscoBaseDevice(BaseDevice):
@@ -34,16 +33,13 @@ class CiscoBaseDevice(BaseDevice):
 
     def cleanup_ios_output(self, input):
         """Clean up returned IOS output from 'show ip interface brief'."""
-
         data = []
 
         for x in input.splitlines():
-
             try:
                 if x.split()[0] == "Interface":
                     continue
                 else:
-
                     interface = {}
                     interface['name'] = x.split()[0]
                     interface['address'] = x.split()[1]
@@ -59,7 +55,6 @@ class CiscoBaseDevice(BaseDevice):
 
     def cleanup_nxos_output(self, x):
         """Clean up returned NX-OS output from 'show ip interface brief'."""
-
         # TODO cleanup like cleanup_ios_output
 
         x = x.replace(' connected', ',connected')
@@ -80,7 +75,6 @@ class CiscoBaseDevice(BaseDevice):
 
     def cleanup_cdp_neighbor_output(self, result):
         """Clean up returned 'show cdp neighbor' output."""
-
         data = []
 
         print(result)
@@ -89,7 +83,6 @@ class CiscoBaseDevice(BaseDevice):
                 if x.split()[0] == "Device":
                     continue
                 else:
-
                     interface = {}
                     interface['device_id'] = x.split()[0]
                     interface['local_iface'] = x.split()[1] + x.split()[2]
