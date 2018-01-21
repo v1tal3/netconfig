@@ -218,25 +218,25 @@ class CiscoNXOS(CiscoBaseDevice):
         Disable is total number of administratively down/manually disabled interfaces.
         Total is total number of interfaces counted.
         """
-        up = down = disabled = total = 0
+        data = {}
+        data['up'] = data['down'] = data['disabled'] = data['total'] = 0
 
-        for interface in interfaces:
-            if 'Interface' not in interface:
-                if 'disabled' in interface:
-                    disabled += 1
-                elif 'notconnect' in interface:
-                    down += 1
-                elif 'sfpAbsent' in interface:
-                    down += 1
-                elif 'down,' in interface:
-                    down += 1
-                elif 'noOperMembers' in interface:
-                    down += 1
-                elif 'connected' in interface:
-                    up += 1
+        for x in interfaces:
+            if 'disabled' in x['status']:
+                data['disabled'] += 1
+            elif 'down' in x['status']:
+                data['down'] += 1
+            elif 'notconnect' in x['status']:
+                data['down'] += 1
+            elif 'noOperMembers' in x['status']:
+                data['down'] += 1
+            elif 'sfpAbsent' in x['status']:
+                data['down'] += 1
+            elif 'up' in x['status']:
+                data['up'] += 1
 
-                total += 1
+            data['total'] += 1
+
         # Counter on NX-OS is always off by 1
-        total -= 1
-
-        return up, down, disabled, total
+        data['total'] -= 1
+        return data

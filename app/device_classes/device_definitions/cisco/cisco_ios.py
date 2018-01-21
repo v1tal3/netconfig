@@ -140,14 +140,18 @@ class CiscoIOS(CiscoBaseDevice):
         Disable is total number of administratively down/manually disabled interfaces.
         """
         data = {}
-        data['up'] = data['down'] = data['disabled'] = 0
+        data['up'] = data['down'] = data['disabled'] = data['total'] = 0
 
         for x in interfaces:
-            if 'up' in x['status']:
-                data['up'] += 1
+            if 'administratively' in x['status']:
+                data['disabled'] += 1
             elif 'down' in x['status']:
                 data['down'] += 1
-            elif 'administratively' in x['status']:
-                data['disabled'] += 1
+            elif 'up' in x['status']:
+                data['up'] += 1
+            elif 'manual deleted' in x['status']:
+                data['total'] -= 1
+
+            data['total'] += 1
 
         return data
