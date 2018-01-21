@@ -6,3 +6,4 @@ Flask-WTF==0.14.2
 netmiko==1.4.2
 redis==2.10.6
 WTForms==2.1
+netaddr==0.7.19
