@@ -72,7 +72,7 @@
 							{% for x in result %}
 								<tr>
 									<td></td>
-									<td> {{ x.name }} </td>
+									<td id="tdInterface"><a href="modalConfigInterface" data-toggle="modal" data-target="#modalConfigInterface" data-interface="{{ x.name }}" data-hostid="{{ host.id }}" onclick="loading();return false;">{{ x.name }}</a> </td>
 									<td> {{ x.address }} </td>
 									<td> {{ x.ok }} </td>
 									<td> {{ x.status }} </td>

@@ -96,7 +96,7 @@ class BaseDevice(object):
         Stores and returns output in an array.
         Each array row is separated by newline.
         """
-        return self.run_ssh_command(command, activeSession).strip()
+        return self.run_ssh_command(command, activeSession).splitlines()
 
     def get_cmd_output_with_commas(self, command, activeSession):
         """Execute command on device and replaces spaces with commas.
@@ -112,3 +112,10 @@ class BaseDevice(object):
     def find_prompt_in_session(self, activeSession):
         """Return device prompt from existing SSH session."""
         return nfn.findPromptInSession(activeSession)
+
+    def replace_double_spaces_commas(self, x):
+        """Replace all double spaces in provided string with a single comma."""
+        x = x.replace("  ", ",,")
+        while ",," in x:
+            x = x.replace(",,", ",")
+        return x

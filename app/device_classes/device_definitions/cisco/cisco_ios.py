@@ -119,7 +119,10 @@ class CiscoIOS(CiscoBaseDevice):
     def pull_device_uptime(self, activeSession):
         """Retrieve device uptime."""
         command = 'show version | include uptime'
-        return self.get_cmd_output(command, activeSession).split("is")[1]
+        uptime = self.get_cmd_output(command, activeSession)
+        for x in uptime:
+            output = x.split(' ', 3)[-1]
+        return output
 
     def pull_host_interfaces(self, activeSession):
         """Retrieve list of interfaces on device."""
