@@ -31,11 +31,11 @@ class CiscoBaseDevice(BaseDevice):
         command = "shutdown"
         return command
 
-    def cleanup_ios_output(self, input):
+    def cleanup_ios_output(self, iosOutput):
         """Clean up returned IOS output from 'show ip interface brief'."""
         data = []
 
-        for x in input.splitlines():
+        for x in iosOutput.splitlines():
             try:
                 if x.split()[0] == "Interface":
                     continue
@@ -53,25 +53,26 @@ class CiscoBaseDevice(BaseDevice):
 
         return data
 
-    def cleanup_nxos_output(self, x):
+    def cleanup_nxos_output(self, nxosOutput):
         """Clean up returned NX-OS output from 'show ip interface brief'."""
         # TODO cleanup like cleanup_ios_output
+        data = []
 
-        x = x.replace(' connected', ',connected')
-        x = x.replace('connected ', 'connected,')
-        x = x.replace(' sfpAbsent', ',sfpAbsent')
-        x = x.replace('sfpAbsent ', 'sfpAbsent,')
-        x = x.replace(' noOperMem', ',noOperMem')
-        x = x.replace('noOperMem ', 'noOperMem,')
-        x = x.replace(' disabled', ',disabled')
-        x = x.replace('disabled ', 'disabled,')
-        x = x.replace(' down', ',down')
-        x = x.replace('down ', 'down,')
-        x = x.replace(' notconnec', ',notconnec')
-        x = x.replace('notconnec ', 'notconnec,')
-        x = x.replace(' linkFlapE', ',linkFlapE')
-        x = x.replace('linkFlapE ', 'linkFlapE,')
-        return x
+        for x in nxosOutput.splitlines():
+            if x:
+                try:
+                    interface = {}
+                    interface['name'] = x.split(',')[0]
+                    interface['address'] = x.split(',')[1]
+                    interface['description'] = x.split(',')[2]
+                    interface['method'] = ''
+                    interface['status'] = x.split(',')[3]
+                    interface['protocol'] = x.split(',')[4]
+                    data.append(interface)
+                except IndexError:
+                    continue
+
+        return data
 
     def cleanup_cdp_neighbor_output(self, result):
         """Clean up returned 'show cdp neighbor' output."""

@@ -69,7 +69,7 @@ class CiscoNXOS(CiscoBaseDevice):
             # Separate these by underscores instead to preserve formatting in HTML output
             result = result.replace(',', '_')
             result = self.replace_double_spaces_commas(result)
-            result = self.split_on_newline(result)
+            result = result.splitlines()
 
             # Set to False while we cycle through any unnecessary header info in the output
             loopData = False
@@ -102,7 +102,10 @@ class CiscoNXOS(CiscoBaseDevice):
     def pull_device_uptime(self, activeSession):
         """Retrieve device uptime."""
         command = 'show version | include uptime'
-        return self.get_cmd_output(command, activeSession).split("is")[1]
+        uptime = self.get_cmd_output(command, activeSession)
+        for x in uptime:
+            output = x.split(' ', 3)[-1]
+        return output
 
     def pull_host_interfaces(self, activeSession):
         """Retrieve list of interfaces on device."""
@@ -110,7 +113,7 @@ class CiscoNXOS(CiscoBaseDevice):
         command = "show interface status | xml"
         result = self.run_ssh_command(command, activeSession)
 
-        tableHeader = 'Interface,IPv4 Address,Name,State,Speed,Options'
+        # tableHeader = 'Interface,IPv4 Address,Name,State,Speed,Options'
 
         # If unable to pull interfaces, return False for both variables
         if containsSkipped(result) or not result:
@@ -180,7 +183,7 @@ class CiscoNXOS(CiscoBaseDevice):
             realIP = ''
             realIPList = []
             # This extracts the IP addresses for each interface, and inserts them into the outputResult string
-            for x in self.split_on_newline(result):
+            for x in result.splitlines():
                 # Line is an interface
                 if 'interface' in x:
                     currentInt = x.split(' ')
@@ -201,10 +204,14 @@ class CiscoNXOS(CiscoBaseDevice):
 
             # Cleanup any remaining instances of 'ip' in outputResult
             outputResult = outputResult.replace(',ip,', ',--,')
-            # Split by newlines
-            outputResult = self.split_on_newline(outputResult)
             # Return interfaces
-            return tableHeader, outputResult
+            # return tableHeader, outputResult.splitlines()
+            print "outputResult"
+            print outputResult
+            totalResult = self.cleanup_nxos_output(outputResult)
+            print "totalResult"
+            print totalResult
+            return totalResult
 
     def count_interface_status(self, interfaces):
         """Return count of interfaces.
