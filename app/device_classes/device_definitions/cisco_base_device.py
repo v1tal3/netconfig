@@ -79,7 +79,7 @@ class CiscoBaseDevice(BaseDevice):
 
         for x in result:
             try:
-                if x.split()[0] == "Device":
+                if "Device" in x.split()[0]:
                     continue
                 else:
                     interface = {}
