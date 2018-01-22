@@ -3,43 +3,37 @@ from app.device_classes.device_definitions.cisco.cisco_ios import CiscoIOS
 
 
 class TestCiscoIOS(unittest.TestCase):
+    """CI testing class for Cisco IOS devices."""
 
     def setUp(self):
-
+        """Initialize static class testing variables."""
         self.device = CiscoIOS('na', 'na', 'na', 'na', 'na', 'na')
 
         self.ios_output = """Interface              IP-Address      OK? Method Status                Protocol
-        Vlan1                  192.168.2.250   YES DHCP   up                    up
-        FastEthernet0/1        unassigned      YES unset  up                    up
-        FastEthernet0/2        unassigned      YES unset  administratively                  down
+        Vlan1                  192.168.0.1     YES DHCP   up                    up
+        FastEthernet1/0/1      unassigned      YES NVRAM  up                    down
+        FastEthernet1/0/2      unassigned      YES unset  down                  down
+        FastEthernet1/0/3      unassigned      YES unset  administratively down down
         """
 
+        self.ios_output_comparison = [{'status': 'up', 'ok': 'YES', 'name': 'Vlan1',
+                                       'address': '192.168.0.1', 'protocol': 'up',
+                                       'method': 'DHCP'},
+                                      {'status': 'up', 'ok': 'YES', 'name': 'FastEthernet1/0/1',
+                                       'address': 'unassigned', 'protocol': 'down',
+                                       'method': 'NVRAM'},
+                                      {'status': 'down', 'ok': 'YES', 'name': 'FastEthernet1/0/2',
+                                       'address': 'unassigned', 'protocol': 'down',
+                                       'method': 'unset'},
+                                      {'status': 'administratively', 'ok': 'YES', 'name': 'FastEthernet1/0/3',
+                                       'address': 'unassigned', 'protocol': 'down',
+                                       'method': 'unset'}]
+
     def test_cleanup_ios_output(self):
-
-        comparison = [{'status': 'up', 'ok': 'YES', 'name': 'Vlan1',
-                       'address': '192.168.2.250', 'protocol': 'up',
-                       'method': 'DHCP'},
-                      {'status': 'up', 'ok': 'YES', 'name': 'FastEthernet0/1',
-                       'address': 'unassigned', 'protocol': 'up',
-                       'method': 'unset'},
-                      {'status': 'administratively', 'ok': 'YES',
-                       'name': 'FastEthernet0/2', 'address': 'unassigned',
-                       'protocol': 'down', 'method': 'unset'}]
-
-        assert self.device.cleanup_ios_output(self.ios_output) == comparison
+        """Test IOS interface output cleanup function."""
+        assert self.device.cleanup_ios_output(self.ios_output) == self.ios_output_comparison
 
     def test_count_interface_status(self):
-
-        input_data = [{'status': 'up', 'ok': 'YES', 'name': 'Vlan1',
-                       'address': '192.168.2.250', 'protocol': 'up',
-                       'method': 'DHCP'},
-                      {'status': 'up', 'ok': 'YES', 'name': 'FastEthernet0/1',
-                       'address': 'unassigned', 'protocol': 'up',
-                       'method': 'unset'},
-                      {'status': 'administratively', 'ok': 'YES',
-                       'name': 'FastEthernet0/2', 'address': 'unassigned',
-                               'protocol': 'down', 'method': 'unset'}]
-
-        comparision = {'down': 0, 'disabled': 1, 'up': 2, 'total': 3}
-
-        assert self.device.count_interface_status(input_data) == comparision
+        """Test count_interface_status function."""
+        count_interface_status_comparison = {'down': 2, 'disabled': 1, 'total': 4, 'up': 1}
+        assert self.device.count_interface_status(self.ios_output_comparison) == count_interface_status_comparison

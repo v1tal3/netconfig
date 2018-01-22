@@ -143,9 +143,9 @@ class CiscoIOS(CiscoBaseDevice):
         for x in interfaces:
             if 'administratively' in x['status']:
                 data['disabled'] += 1
-            elif 'down' in x['status']:
+            elif 'down' in x['protocol']:
                 data['down'] += 1
-            elif 'up' in x['status']:
+            elif 'up' in x['status'] and 'up' in x['protocol']:
                 data['up'] += 1
             elif 'manual deleted' in x['status']:
                 data['total'] -= 1
