@@ -65,3 +65,10 @@ def containsSkipped(x):
             return False
     except:
         return False
+
+
+def removeDictKey(d, key):
+    """Remove key from dictionary."""
+    r = dict(d)
+    del r[key]
+    return r

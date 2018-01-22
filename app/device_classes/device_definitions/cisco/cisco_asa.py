@@ -35,7 +35,7 @@ class CiscoASA(CiscoBaseDevice):
 
     def pull_interface_mac_addresses(self, activeSession):
         """Not supported on ASA's, so intentionally returns blank string."""
-        return ''
+        return '', ''
 
     def pull_interface_statistics(self, activeSession):
         """Retrieve statistics for interface on device."""
@@ -45,10 +45,10 @@ class CiscoASA(CiscoBaseDevice):
     def pull_interface_info(self, activeSession):
         """Retrieve various informational command output for interface on device."""
         intConfig = self.pull_interface_config(activeSession)
-        intMac = self.pull_interface_mac_addresses(activeSession)
+        intMacHead, intMacBody = self.pull_interface_mac_addresses(activeSession)
         intStats = self.pull_interface_statistics(activeSession)
 
-        return intConfig, intMac, intStats
+        return intConfig, intMacHead, intMacBody, intStats
 
     def pull_device_uptime(self, activeSession):
         """Retrieve device uptime."""

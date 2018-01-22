@@ -207,7 +207,7 @@ def disconnectAllSSHSessions():
         if str(y[1]) == str(session['UUID']):
             disconnectFromSSH(ssh[x])
             host = db_modifyDatabase.getHostByID(y[0])
-            ssh.pop(x)
+            ssh = fn.removeDictKey(ssh, x)
             writeToLog('disconnected SSH session to device %s for user %s' % (host.hostname, y[1]))
 
     # Try statement needed as 500 error thrown if user is not currently logged in.
@@ -1043,7 +1043,6 @@ def modalEditInterfaceOnHost(x):
     intConfig = host.pull_interface_config(activeSession)
     # Edit form
     form = EditInterfaceForm(request.values, host=host, interface=host.interface)
-    print host.interface
 
     if form.validate_on_submit():
         flash('Interface to edit - "%s"' % (host.interface))
