@@ -206,11 +206,7 @@ class CiscoNXOS(CiscoBaseDevice):
             outputResult = outputResult.replace(',ip,', ',--,')
             # Return interfaces
             # return tableHeader, outputResult.splitlines()
-            print "outputResult"
-            print outputResult
             totalResult = self.cleanup_nxos_output(outputResult)
-            print "totalResult"
-            print totalResult
             return totalResult
 
     def count_interface_status(self, interfaces):
@@ -229,17 +225,20 @@ class CiscoNXOS(CiscoBaseDevice):
                 data['disabled'] += 1
             elif 'down' in x['status']:
                 data['down'] += 1
-            elif 'notconnect' in x['status']:
-                data['down'] += 1
-            elif 'noOperMembers' in x['status']:
-                data['down'] += 1
-            elif 'sfpAbsent' in x['status']:
-                data['down'] += 1
             elif 'up' in x['status']:
                 data['up'] += 1
 
             data['total'] += 1
 
-        # Counter on NX-OS is always off by 1
-        data['total'] -= 1
         return data
+
+    def get_interface_status(self, interface):
+        """Return status of interface."""
+        if 'disabled' in interface:
+            return 'disabled'
+        elif 'down' in interface or 'notconnect' in interface or 'noOperMembers' in interface or 'sfpAbsent' in interface:
+            return 'down'
+        elif 'connected' in interface:
+            return 'up'
+        else:
+            return 'unknown'

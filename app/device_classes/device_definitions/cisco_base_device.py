@@ -43,7 +43,6 @@ class CiscoBaseDevice(BaseDevice):
                     interface = {}
                     interface['name'] = x.split()[0]
                     interface['address'] = x.split()[1]
-                    interface['ok'] = x.split()[2]
                     interface['method'] = x.split()[3]
                     interface['status'] = x.split()[4]
                     interface['protocol'] = x.split()[5]
@@ -66,8 +65,8 @@ class CiscoBaseDevice(BaseDevice):
                     interface['address'] = x.split(',')[1]
                     interface['description'] = x.split(',')[2]
                     interface['method'] = ''
-                    interface['status'] = x.split(',')[3]
-                    interface['protocol'] = x.split(',')[4]
+                    interface['protocol'] = x.split(',')[3]
+                    interface['status'] = self.get_interface_status(x.split(',')[3])
                     data.append(interface)
                 except IndexError:
                     continue

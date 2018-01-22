@@ -1266,6 +1266,7 @@ def hostShellOutput(x, m, y):
             # Get command output as a list.
             # Insert list contents into 'output' list.
             configError = True
+            output = ''
         else:
             output = getCmdOutputNoCR(activeSession, command)
 

@@ -19,9 +19,7 @@ def getCmdOutput(ssh, command):
 
 def getCmdOutputNoCR(ssh, command):
     """Get command output from host by provided IP address without submitting a Carriage Return at the end."""
-
-    # Return config
-    return nfn.runSSHCommandInSessionNoCR(command, ssh)
+    return nfn.runSSHCommandInSessionNoCR(command, ssh).splitlines()
 
 
 def getCfgCmdOutput(ssh, command):
