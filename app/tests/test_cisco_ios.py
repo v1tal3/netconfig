@@ -29,11 +29,31 @@ class TestCiscoIOS(unittest.TestCase):
                                        'address': 'unassigned', 'protocol': 'down',
                                        'method': 'unset'}]
 
+        self.cdp_neigh_input = ['Device ID        Local Intrfce     Holdtme    Capability  Platform  Port ID',
+                                'router02         Fas 0/1           76                R    MikroTik  bridge1']
+
     def test_cleanup_ios_output(self):
         """Test IOS interface output cleanup function."""
-        assert self.device.cleanup_ios_output(self.ios_output) == self.ios_output_comparison
+        result = self.device.cleanup_ios_output(self.ios_output)
+
+        assert result == self.ios_output_comparison
 
     def test_count_interface_status(self):
         """Test count_interface_status function."""
-        count_interface_status_comparison = {'down': 2, 'disabled': 1, 'total': 4, 'up': 1}
-        assert self.device.count_interface_status(self.ios_output_comparison) == count_interface_status_comparison
+        count_interface_status_comparison = {'down': 2,
+                                             'disabled': 1,
+                                             'total': 4,
+                                             'up': 1}
+
+        result = self.device.count_interface_status(self.ios_output_comparison)
+        assert result == count_interface_status_comparison
+
+    def test_cdp_neighbor_formatting(self):
+
+        cdp_neigh_comparison = [{'hold_time': '76', 'capability': 'R',
+                                'platform': 'MikroTik', 'local_iface': 'Fas0/1',
+                                'port_id': 'bridge1', 'device_id': 'router02'}]
+
+        result = self.device.cleanup_cdp_neighbor_output(self.cdp_neigh_input)
+
+        assert result == cdp_neigh_comparison

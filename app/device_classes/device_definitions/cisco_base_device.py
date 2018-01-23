@@ -35,17 +35,18 @@ class CiscoBaseDevice(BaseDevice):
         """Clean up returned IOS output from 'show ip interface brief'."""
         data = []
 
-        for x in iosOutput.splitlines():
+        for line in iosOutput.splitlines():
             try:
-                if x.split()[0] == "Interface":
+                x = line.split()
+                if x[0] == "Interface":
                     continue
                 else:
                     interface = {}
-                    interface['name'] = x.split()[0]
-                    interface['address'] = x.split()[1]
-                    interface['method'] = x.split()[3]
-                    interface['status'] = x.split()[4]
-                    interface['protocol'] = x.split()[5]
+                    interface['name'] = x[0]
+                    interface['address'] = x[1]
+                    interface['method'] = x[3]
+                    interface['status'] = x[4]
+                    interface['protocol'] = x[5]
                     data.append(interface)
             except IndexError:
                 continue
@@ -57,16 +58,17 @@ class CiscoBaseDevice(BaseDevice):
         # TODO cleanup like cleanup_ios_output
         data = []
 
-        for x in nxosOutput.splitlines():
-            if x:
+        for line in nxosOutput.splitlines():
+            if line:
+                x = line.split(',')
                 try:
                     interface = {}
-                    interface['name'] = x.split(',')[0]
-                    interface['address'] = x.split(',')[1]
-                    interface['description'] = x.split(',')[2]
+                    interface['name'] = x[0]
+                    interface['address'] = x[1]
+                    interface['description'] = x[2]
                     interface['method'] = ''
-                    interface['protocol'] = x.split(',')[3]
-                    interface['status'] = self.get_interface_status(x.split(',')[3])
+                    interface['protocol'] = x[3]
+                    interface['status'] = self.get_interface_status(x[3])
                     data.append(interface)
                 except IndexError:
                     continue
@@ -77,18 +79,22 @@ class CiscoBaseDevice(BaseDevice):
         """Clean up returned 'show cdp neighbor' output."""
         data = []
 
-        for x in result:
+        for line in result:
             try:
-                if "Device" in x.split()[0]:
+                x = line.split()
+                if "Device" in x[0]:
                     continue
                 else:
                     interface = {}
-                    interface['device_id'] = x.split()[0] + x.split()[1]
-                    interface['local_iface'] = x.split()[2]
-                    interface['hold_time'] = x.split()[3]
-                    interface['capability'] = x.split()[4]
-                    interface['platform'] = x.split()[5]
-                    interface['port_id'] = x.split()[6] + x.split()[7]
+                    interface['device_id'] = x[0]
+                    interface['local_iface'] = x[1] + x[2]
+                    interface['hold_time'] = x[3]
+                    interface['capability'] = x[4]
+                    interface['platform'] = x[5]
+                    try:
+                        interface['port_id'] = x[6] + x[7]
+                    except IndexError:
+                        interface['port_id'] = x[6]
                     data.append(interface)
             except IndexError:
                 continue
