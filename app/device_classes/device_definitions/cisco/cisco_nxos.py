@@ -278,9 +278,12 @@ class CiscoNXOS(CiscoBaseDevice):
 
     def get_interface_status(self, interface):
         """Return status of interface."""
+
+        down_strings = ['down', 'notconnect', 'noOperMembers', 'sfpAbsent']
+
         if 'disabled' in interface:
             return 'disabled'
-        elif 'down' in interface or 'notconnect' in interface or 'noOperMembers' in interface or 'sfpAbsent' in interface:
+        elif any(x in interface for x in down_strings):
             return 'down'
         elif 'connected' in interface:
             return 'up'
