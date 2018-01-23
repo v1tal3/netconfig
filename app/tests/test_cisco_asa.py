@@ -16,21 +16,22 @@ class TestCiscoASA(unittest.TestCase):
         FastEthernet1/0/3      unassigned      YES unset  administratively down down
         """
 
-        self.asa_output_comparison = [{'status': 'up', 'ok': 'YES', 'name': 'Vlan1',
+        self.asa_output_comparison = [{'status': 'up', 'name': 'Vlan1',
                                        'address': '192.168.0.1', 'protocol': 'up',
                                        'method': 'DHCP'},
-                                      {'status': 'up', 'ok': 'YES', 'name': 'FastEthernet1/0/1',
+                                      {'status': 'up', 'name': 'FastEthernet1/0/1',
                                        'address': 'unassigned', 'protocol': 'down',
                                        'method': 'NVRAM'},
-                                      {'status': 'down', 'ok': 'YES', 'name': 'FastEthernet1/0/2',
+                                      {'status': 'down', 'name': 'FastEthernet1/0/2',
                                        'address': 'unassigned', 'protocol': 'down',
                                        'method': 'unset'},
-                                      {'status': 'administratively', 'ok': 'YES', 'name': 'FastEthernet1/0/3',
+                                      {'status': 'administratively', 'name': 'FastEthernet1/0/3',
                                        'address': 'unassigned', 'protocol': 'down',
                                        'method': 'unset'}]
 
     def test_cleanup_asa_output(self):
         """Test ASA interface output cleanup function."""
+
         assert self.device.cleanup_ios_output(self.asa_output) == self.asa_output_comparison
 
     def test_count_interface_status(self):
