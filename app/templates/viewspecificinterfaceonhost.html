@@ -14,11 +14,14 @@
 			<div class="table-responsive">
 				<table class="table table-striped table-hover table-condensed">
 					{% autoescape false %}
-					<tr>
-						{% for x in intMacHead.split(',') %}
-							<th>{{ x }}</th>
-						{% endfor %}
-					</tr>
+					<thead>
+						<tr>
+							{% for x in intMacHead.split(',') %}
+								<th>{{ x }}</th>
+							{% endfor %}
+						</tr>
+					</thead>
+					<tbody>
 					{% for x in intMacBody %} <!-- x is a single line in the array -->
 						<tr>
 							{% for y in x.split(',') %} <!-- y is a single word in the line -->
@@ -28,6 +31,7 @@
 							{% endfor %}
 						</tr>
 					{% endfor %}
+					</tbody>
 					{% endautoescape %}
 				</table>
 			</div>
