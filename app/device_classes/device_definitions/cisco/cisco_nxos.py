@@ -43,8 +43,6 @@ class CiscoNXOS(CiscoBaseDevice):
         command = "show cdp neighbors detail | xml"
         result = self.run_ssh_command(command, activeSession)
 
-        # tableHeader = 'Interface,IPv4 Address,Name,State,Speed,Options'
-
         data = []
         # If unable to pull interfaces, return False for both variables
         if containsSkipped(result) or not result:
@@ -60,8 +58,8 @@ class CiscoNXOS(CiscoBaseDevice):
 
             # This variable is to skip the first instance of "ROW_cdp_neighbor_detail_info" in the XML output
             a = False
+            device = {}
             for elem in root.iter():
-                device = {}
                 if a:
                     if not elem.tag.isspace() and not elem.text.isspace():
                         # Skip certain columns
@@ -81,9 +79,13 @@ class CiscoNXOS(CiscoBaseDevice):
 
                 # This is to skip the first instance of "ROW_cdp_neighbor_detail_info" in the XML output
                 if elem.tag == 'ROW_cdp_neighbor_detail_info':
-                    data.append(device)
+                    if device:
+                        data.append(device)
+                    device = {}
                     a = True
 
+        # Needed for last device in XML list
+        data.append(device)
         return data
 
     def pull_interface_config(self, activeSession):
@@ -278,7 +280,6 @@ class CiscoNXOS(CiscoBaseDevice):
 
     def get_interface_status(self, interface):
         """Return status of interface."""
-
         down_strings = ['down', 'notconnect', 'noOperMembers', 'sfpAbsent']
 
         if 'disabled' in interface:
