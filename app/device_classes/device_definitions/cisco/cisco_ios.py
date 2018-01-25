@@ -83,7 +83,7 @@ class CiscoIOS(CiscoBaseDevice):
                 #     if line.count(',') > 1:
                 #         # Store table header line in string, with commas to separate fields
                 #         data['tableHeader'] = line
-                elif line and 'Mac' not in line and '-' not in line:
+                elif line and 'Mac' not in line and '--' not in line:
                     # Regexp to search for any substring in line that contains an underscore.
                     # Then replaces the whitespace around it with commas.
                     # This is for IOS-XE devices with multiple protocols that interface with HTML formatting.
@@ -102,19 +102,24 @@ class CiscoIOS(CiscoBaseDevice):
                     line = line.replace(' ,', ',')
                     tableBody.append(line)
 
+            # Different output for IOS vs IOS-XE.  Need to cleanup
             for line in tableBody:
-                # Split line on commas
-                x = line.split(',')
-                # Remove empty fields from string, specifically if first field is empty (1-2 digit vlan causes this)
-                x = filter(None, x)
-                if x:
-                    y = {}
-                    y['vlan'] = x[0].strip()
-                    y['macAddr'] = x[1].strip()
-                    y['port'] = x[3].strip()
-                    # Assign dictionary to list, for use in HTML page
-                    data.append(y)
-
+                # Skip IOS-XE header
+                if 'protocols' not in line:
+                    # Split line on commas
+                    x = line.split(',')
+                    # Remove empty fields from string, specifically if first field is empty (1-2 digit vlan causes this)
+                    x = filter(None, x)
+                    if x:
+                        y = {}
+                        y['vlan'] = x[0].strip()
+                        y['macAddr'] = x[1].strip()
+                        if self.ios_type == 'cisco_ios':
+                            y['port'] = x[3].strip()
+                        else:
+                            y['port'] = x[4].strip()
+                        # Assign dictionary to list, for use in HTML page
+                        data.append(y)
             return data
 
     def pull_interface_statistics(self, activeSession):
