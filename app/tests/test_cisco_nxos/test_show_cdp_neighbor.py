@@ -7,7 +7,7 @@ except ImportError:
 
 
 class TestCiscoNXOS(unittest.TestCase):
-    """CI testing class for Cisco IOS devices."""
+    """CI testing class for Cisco NXOS devices."""
 
     @mock.patch.object(CiscoNXOS, 'run_ssh_command')
     def test_cdp_neighbor_formatting(self, mocked_method):
@@ -82,6 +82,3 @@ class TestCiscoNXOS(unittest.TestCase):
                                  'port_id': 'Ethernet1/2', 'device_id': 'Switch-DC-2'}]
 
         self.assertEqual(device.pull_cdp_neighbor(None), nxos_expected_output)
-
-if __name__ == '__main__':
-    unittest.main()

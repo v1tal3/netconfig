@@ -1006,7 +1006,7 @@ def modalSpecificInterfaceOnHost(x, y):
     # Replace's '=' with '.'
     host.interface = interface.replace('=', '.')
 
-    intConfig, intMacHead, intMacBody, intStats = host.pull_interface_info(activeSession)
+    intConfig, intMacAddr, intStats = host.pull_interface_info(activeSession)
     macToIP = ''
 
     writeToLog('viewed interface %s on host %s' % (interface, host.hostname))
@@ -1014,8 +1014,7 @@ def modalSpecificInterfaceOnHost(x, y):
                            host=host,
                            interface=interface,
                            intConfig=intConfig,
-                           intMacHead=intMacHead,
-                           intMacBody=intMacBody,
+                           intMacAddr=intMacAddr,
                            macToIP=macToIP,
                            intStats=intStats)
 

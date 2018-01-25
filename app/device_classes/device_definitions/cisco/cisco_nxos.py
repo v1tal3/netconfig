@@ -62,14 +62,9 @@ class CiscoNXOS(CiscoBaseDevice):
             for elem in root.iter():
                 if a:
                     if not elem.tag.isspace() and not elem.text.isspace():
-                        # Skip certain columns
-                        if elem.tag == 'ifindex' or elem.tag == 'ttl' or elem.tag == 'capability':
-                            pass
                         # Placeholder 'ip' for upcoming IP address lookup in new function
                         if elem.tag == 'sysname':
                             device['device_id'] = elem.text
-                        # elif elem.tag == 'v4addr':
-                        #     device['ipaddress'] = elem.text
                         elif elem.tag == 'platform_id':
                             device['platform'] = elem.text
                         elif elem.tag == 'intf_id':
@@ -77,7 +72,7 @@ class CiscoNXOS(CiscoBaseDevice):
                         elif elem.tag == 'port_id':
                             device['port_id'] = elem.text
 
-                # This is to skip the first instance of "ROW_cdp_neighbor_detail_info" in the XML output
+                # Save data to dictionary and reset it to null for next loop iteration
                 if elem.tag == 'ROW_cdp_neighbor_detail_info':
                     if device:
                         data.append(device)
@@ -95,42 +90,52 @@ class CiscoNXOS(CiscoBaseDevice):
 
     def pull_interface_mac_addresses(self, activeSession):
         """Retrieve MAC address table for interface on device."""
-        command = "show mac address-table interface %s" % (self.interface)
+        # This is needed because if interface is a vlan, then a different command is used
+        if 'Vlan' in self.interface:
+            # The interface will read as 'Vlan#', and the command requires a space between 'Vlan' and '#'
+            command = "show mac address-table %s | xml" % (self.interface.replace('Vlan', 'Vlan '))
+        else:
+            command = "show mac address-table interface %s | xml" % (self.interface)
         # command = "show mac address-table interface %s | exclude VLAN | exclude Legend" % (self.interface)
         result = self.run_ssh_command(command, activeSession)
 
-        if self.check_invalid_input_detected(result):
-            return ''
+        # If unable to pull interfaces, return False for both variables
+        if self.check_invalid_input_detected(result) or containsSkipped(result) or not result:
+            return False
         else:
-            # Statically configure the table header as string
-            # Need to configure to dynamically pull it later, as it is the line before the ----- seperator line
-            tableHeader = "Vlan,Mac Address,Type,Age,Secure,NTFY,Ports"
-            # Stores table body data as array
-            tableBody = []
+            data = []
+            result = re.findall("\<\?xml.*reply\>", result, re.DOTALL)
+            # Strip namespaces
+            it = ET.iterparse(StringIO(result[0]))
+            for _, el in it:
+                if '}' in el.tag:
+                    el.tag = el.tag.split('}', 1)[1]  # strip all namespaces
+            root = it.root
 
-            # Remove any asterisks
-            result = result.replace('*', '')
+            # This variable is to skip the first instance of "ROW_mac_address" in the XML output
+            a = False
+            device = {}
+            for elem in root.iter():
+                if a:
+                    if not elem.tag.isspace() and not elem.text.isspace():
+                        # Placeholder 'ip' for upcoming IP address lookup in new function
+                        if elem.tag == 'disp_mac_addr':
+                            device['macAddr'] = elem.text
+                        elif elem.tag == 'disp_vlan':
+                            device['vlan'] = elem.text
+                        elif elem.tag == 'disp_port':
+                            device['port'] = elem.text
 
-            # In IOS-XE, there are multiple protocols separated by commas.
-            # Separate these by underscores instead to preserve formatting in HTML output
-            result = result.replace(',', '_')
-            result = self.replace_double_spaces_commas(result)
-            result = result.splitlines()
+                # Save data to dictionary and reset it to null for next loop iteration
+                if elem.tag == 'ROW_mac_address':
+                    if device:
+                        data.append(device)
+                    device = {}
+                    a = True
 
-            # Set to False while we cycle through any unnecessary header info in the output
-            loopData = False
-
-            for line in result:
-                if loopData:
-                    # Remove any single spaces in front of commas
-                    line = line.replace(' ,', ',')
-                    tableBody.append(line)
-                # Continue until we find the line separator of all dashes
-                elif '---' in line:
-                    # The rest of the output is the data we want
-                    loopData = True
-
-            return tableHeader, tableBody
+        # Needed for last device in XML list
+        data.append(device)
+        return data
 
     def pull_interface_statistics(self, activeSession):
         """Retrieve statistics for interface on device."""
@@ -140,10 +145,10 @@ class CiscoNXOS(CiscoBaseDevice):
     def pull_interface_info(self, activeSession):
         """Retrieve various informational command output for interface on device."""
         intConfig = self.pull_interface_config(activeSession)
-        intMacHead, intMacBody = self.pull_interface_mac_addresses(activeSession)
+        intMacAddr = self.pull_interface_mac_addresses(activeSession)
         intStats = self.pull_interface_statistics(activeSession)
 
-        return intConfig, intMacHead, intMacBody, intStats
+        return intConfig, intMacAddr, intStats
 
     def pull_device_uptime(self, activeSession):
         """Retrieve device uptime."""

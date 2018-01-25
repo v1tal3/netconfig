@@ -43,6 +43,8 @@ class CiscoIOS(CiscoBaseDevice):
 
     def pull_interface_mac_addresses(self, activeSession):
         """Retrieve MAC address table for interface on device."""
+        # TODO: This entire function needs to be better optimized
+        #  Possibly split into two functions: one each for IOS and IOS-XE
         command = "show mac address-table interface %s" % (self.interface)
         for a in range(2):
             result = self.run_ssh_command(command, activeSession)
@@ -54,10 +56,9 @@ class CiscoIOS(CiscoBaseDevice):
         if self.check_invalid_input_detected(result):
             return '', ''
         else:
-            # Stores table headers as string
-            tableHeader = ''
             # Stores table body data as array
             tableBody = []
+            data = []
 
             # Remove any asterisks
             result = result.replace('*', '')
@@ -77,11 +78,11 @@ class CiscoIOS(CiscoBaseDevice):
                     # We are done with Unicast entries, so break out of loop
                     break
                 # Loop until header is filled, as the header isn't always in the very first line
-                elif not tableHeader and ',' in line:
-                    # Skip this iteration if there's only a single comma.  The header should have multiple fields
-                    if line.count(',') > 1:
-                        # Store table header line in string, with commas to separate fields
-                        tableHeader = line
+                # elif not data['tableHeader'] and ',' in line:
+                #     # Skip this iteration if there's only a single comma.  The header should have multiple fields
+                #     if line.count(',') > 1:
+                #         # Store table header line in string, with commas to separate fields
+                #         data['tableHeader'] = line
                 elif line and 'Mac' not in line and '-' not in line:
                     # Regexp to search for any substring in line that contains an underscore.
                     # Then replaces the whitespace around it with commas.
@@ -101,7 +102,20 @@ class CiscoIOS(CiscoBaseDevice):
                     line = line.replace(' ,', ',')
                     tableBody.append(line)
 
-            return tableHeader, tableBody
+            for line in tableBody:
+                # Split line on commas
+                x = line.split(',')
+                # Remove empty fields from string, specifically if first field is empty (1-2 digit vlan causes this)
+                x = filter(None, x)
+                if x:
+                    y = {}
+                    y['vlan'] = x[0].strip()
+                    y['macAddr'] = x[1].strip()
+                    y['port'] = x[3].strip()
+                    # Assign dictionary to list, for use in HTML page
+                    data.append(y)
+
+            return data
 
     def pull_interface_statistics(self, activeSession):
         """Retrieve statistics for interface on device."""
@@ -111,10 +125,10 @@ class CiscoIOS(CiscoBaseDevice):
     def pull_interface_info(self, activeSession):
         """Retrieve various informational command output for interface on device."""
         intConfig = self.pull_interface_config(activeSession)
-        intMacHead, intMacBody = self.pull_interface_mac_addresses(activeSession)
+        intMacAddr = self.pull_interface_mac_addresses(activeSession)
         intStats = self.pull_interface_statistics(activeSession)
 
-        return intConfig, intMacHead, intMacBody, intStats
+        return intConfig, intMacAddr, intStats
 
     def pull_device_uptime(self, activeSession):
         """Retrieve device uptime."""
