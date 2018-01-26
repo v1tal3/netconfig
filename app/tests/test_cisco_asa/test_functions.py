@@ -31,10 +31,14 @@ class TestCiscoASA(unittest.TestCase):
 
     def test_cleanup_asa_output(self):
         """Test ASA interface output cleanup function."""
-
         assert self.device.cleanup_ios_output(self.asa_output) == self.asa_output_comparison
 
     def test_count_interface_status(self):
         """Test count_interface_status function."""
         count_interface_status_comparison = {'down': 2, 'disabled': 1, 'total': 4, 'up': 1}
         assert self.device.count_interface_status(self.asa_output_comparison) == count_interface_status_comparison
+
+    def test_pull_interface_mac_addresses(self):
+        """Test pull_interface_mac_addresses function."""
+        asa_expected_output = ''
+        self.assertEqual(self.device.pull_interface_mac_addresses(None), asa_expected_output)
