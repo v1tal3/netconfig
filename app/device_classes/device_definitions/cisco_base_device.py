@@ -78,13 +78,25 @@ class CiscoBaseDevice(BaseDevice):
     def cleanup_cdp_neighbor_output(self, result):
         """Clean up returned 'show cdp neighbor' output."""
         data = []
+        # Temporarily stores each body string when device hostname is on its own line
+        singleHostname = ''
+        skipHeader = True
 
         for line in result:
             try:
                 x = line.split()
                 if "Device" in x[0]:
+                    skipHeader = False
                     continue
+                elif skipHeader:
+                    continue
+                # This is needed in case the hostname is too long and is returned on its own line
+                elif ' ' not in line:
+                    singleHostname += str(line)
                 else:
+                    if singleHostname:
+                        x.insert(0, singleHostname)
+                        singleHostname = ''
                     interface = {}
                     interface['device_id'] = x[0]
                     interface['local_iface'] = x[1] + x[2]

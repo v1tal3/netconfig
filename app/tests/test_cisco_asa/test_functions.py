@@ -9,12 +9,13 @@ class TestCiscoASA(unittest.TestCase):
         """Initialize static class testing variables."""
         self.device = CiscoASA('na', 'na', 'na', 'na', 'na', 'na')
 
-        self.asa_output = """Interface              IP-Address      OK? Method Status                Protocol
-        Vlan1                  192.168.0.1     YES DHCP   up                    up
-        FastEthernet1/0/1      unassigned      YES NVRAM  up                    down
-        FastEthernet1/0/2      unassigned      YES unset  down                  down
-        FastEthernet1/0/3      unassigned      YES unset  administratively down down
-        """
+        self.asa_output = '''
+Interface              IP-Address      OK? Method Status                Protocol
+Vlan1                  192.168.0.1     YES DHCP   up                    up
+FastEthernet1/0/1      unassigned      YES NVRAM  up                    down
+FastEthernet1/0/2      unassigned      YES unset  down                  down
+FastEthernet1/0/3      unassigned      YES unset  administratively down down
+'''
 
         self.asa_output_comparison = [{'status': 'up', 'name': 'Vlan1',
                                        'address': '192.168.0.1', 'protocol': 'up',

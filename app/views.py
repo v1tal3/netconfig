@@ -21,8 +21,8 @@ from scripts_bank import ping_hosts as ph
 from scripts_bank.redis_logic import deleteUserInRedis, resetUserRedisExpireTimer, storeUserInRedis
 from scripts_bank.lib import functions as fn
 from scripts_bank.lib.flask_functions import checkUserLoggedInStatus
-from scripts_bank.lib.netmiko_functions import disconnectFromSSH, getSSHSession, runSSHCfgCommandInSession
-from scripts_bank.lib.netmiko_functions import runSSHCommandInSessionNoCR, sessionIsAlive
+from scripts_bank.lib.netmiko_functions import disconnectFromSSH, getSSHSession
+from scripts_bank.lib.netmiko_functions import sessionIsAlive
 
 from .forms import AddHostForm, CustomCfgCommandsForm, CustomCommandsForm
 from .forms import EditHostForm, EditInterfaceForm, ImportHostsForm, LoginForm
@@ -1266,12 +1266,15 @@ def hostShellOutput(x, m, y):
             configError = True
             output = ''
         else:
-            output = runSSHCommandInSessionNoCR(command, activeSession).splitlines()
+            # Run command on provided existing SSH session and returns output.
+            # Since we set normalize to False, we need to do this.
+            # The normalize() function in NetMiko does rstrip and adds a CR to the end of the command.
+            output = activeSession.send_command(command.strip(), normalize=False).splitlines()
 
     else:
         if m == 'c':
             # Get configuration command output from network device, split output by newline
-            output = runSSHCfgCommandInSession(command, activeSession).splitlines()
+            output = activeSession.send_config_set(command, exit_config_mode=False).splitlines()
             # Remove first item in list, as Netmiko returns the command ran only in the output
             output.pop(0)
         else:

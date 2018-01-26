@@ -20,14 +20,14 @@ class TestCiscoIOS(unittest.TestCase):
         """Test MAC address table formatting."""
         self.device.ios_type = 'cisco_ios'
         mocked_method.return_value = '''
-                  Mac Address Table
-        -------------------------------------------
+          Mac Address Table
+-------------------------------------------
 
-        Vlan    Mac Address       Type        Ports
-        ----    -----------       --------    -----
-           1    1234.5678.90ab    DYNAMIC     Po1
-          10    90ab.1234.5678    DYNAMIC     Gi1/0/1
-         100    5678.90ab.1234    DYNAMIC     Po100
+Vlan    Mac Address       Type        Ports
+----    -----------       --------    -----
+   1    1234.5678.90ab    DYNAMIC     Po1
+  10    90ab.1234.5678    DYNAMIC     Gi1/0/1
+ 100    5678.90ab.1234    DYNAMIC     Po100
         '''
 
         ios_expected_output = [{'vlan': '1', 'macAddr': '1234.5678.90ab', 'port': 'Po1'},
@@ -41,18 +41,18 @@ class TestCiscoIOS(unittest.TestCase):
         """Test MAC address table formatting."""
         self.device.ios_type = 'cisco_xe'
         mocked_method.return_value = '''
-        Unicast Entries
-         vlan     mac address     type        protocols               port
-        ---------+---------------+--------+---------------------+-------------------------
-           1      1234.5678.90ab   dynamic ip,ipx,assigned,other Port-channel1
-          10      90ab.1234.5678   dynamic ip,ipx,assigned,other TenGigabitEthernet1/0/1
-         100      5678.90ab.1234   dynamic ip,ipx,assigned,other Port-channel100
+Unicast Entries
+ vlan     mac address     type        protocols               port
+---------+---------------+--------+---------------------+-------------------------
+   1      1234.5678.90ab   dynamic ip,ipx,assigned,other Port-channel1
+  10      90ab.1234.5678   dynamic ip,ipx,assigned,other TenGigabitEthernet1/0/1
+ 100      5678.90ab.1234   dynamic ip,ipx,assigned,other Port-channel100
 
-        Multicast Entries
-         vlan     mac address     type    ports
-        ---------+---------------+-------+--------------------------------------------
-           1      aaaa.bbbb.cccc   system Te1/1/1,Te1/1/2,Te1/1/3,Te1/1/4,Te1/1/5
-                                          Po1,Po10,Po100
+Multicast Entries
+ vlan     mac address     type    ports
+---------+---------------+-------+--------------------------------------------
+   1      aaaa.bbbb.cccc   system Te1/1/1,Te1/1/2,Te1/1/3,Te1/1/4,Te1/1/5
+                                  Po1,Po10,Po100
         '''
 
         iosxe_expected_output = [{'vlan': '1', 'macAddr': '1234.5678.90ab', 'port': 'Port-channel1'},
