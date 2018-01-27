@@ -38,50 +38,9 @@ class CiscoNXOS(CiscoBaseDevice):
 
         This should be redone using XML pulls/parsing.
         """
-        # command = self.cmd_cdp_neighbor()
-        # result = self.get_cmd_output(command, activeSession)
-        command = "show cdp neighbors detail | xml"
-        result = self.run_ssh_command(command, activeSession)
-
-        data = []
-        # If unable to pull interfaces, return False for both variables
-        if containsSkipped(result) or not result:
-            return False
-        else:
-            result = re.findall("\<\?xml.*reply\>", result, re.DOTALL)
-            # Strip namespaces
-            it = ET.iterparse(StringIO(result[0]))
-            for _, el in it:
-                if '}' in el.tag:
-                    el.tag = el.tag.split('}', 1)[1]  # strip all namespaces
-            root = it.root
-
-            # This variable is to skip the first instance of "ROW_cdp_neighbor_detail_info" in the XML output
-            a = False
-            device = {}
-            for elem in root.iter():
-                if a:
-                    if not elem.tag.isspace() and not elem.text.isspace():
-                        # Placeholder 'ip' for upcoming IP address lookup in new function
-                        if elem.tag == 'sysname':
-                            device['device_id'] = elem.text
-                        elif elem.tag == 'platform_id':
-                            device['platform'] = elem.text
-                        elif elem.tag == 'intf_id':
-                            device['local_iface'] = elem.text
-                        elif elem.tag == 'port_id':
-                            device['port_id'] = elem.text
-
-                # Save data to dictionary and reset it to null for next loop iteration
-                if elem.tag == 'ROW_cdp_neighbor_detail_info':
-                    if device:
-                        data.append(device)
-                    device = {}
-                    a = True
-
-        # Needed for last device in XML list
-        data.append(device)
-        return data
+        command = self.cmd_cdp_neighbor()
+        result = self.get_cmd_output(command, activeSession)
+        return self.cleanup_cdp_neighbor_output(result)
 
     def pull_interface_config(self, activeSession):
         """Retrieve configuration for interface on device."""

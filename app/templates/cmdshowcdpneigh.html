@@ -8,6 +8,7 @@
 							<thead>
 								<tr>
 									<th>Device ID</th>
+									<th>IP Address</th>
 									<th>Local Interface</th>
 									<th>Platform</th>
 									<th>Port ID</th>
@@ -17,6 +18,7 @@
 								{% for x in neigh %}
 									<tr>
 										<td> {{ x.device_id }} </td>
+										<td> {{ x.remote_ip }} </td>
 										<td> {{ x.local_iface }} </td>
 										<td> {{ x.platform }} </td>
 										<td> {{ x.port_id }} </td>
