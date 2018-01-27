@@ -94,8 +94,8 @@ class TestCiscoNXOS(unittest.TestCase):
 ]]>]]>
 '''
 
-        nxos_expected_output = [{'macAddr': '1234.5678.90ab', 'port': 'port-channel1', 'vlan': '1'},
-                                {'macAddr': '90ab.1234.5678', 'port': 'Ethernet1/1', 'vlan': '10'},
-                                {'macAddr': '5678.90ab.1234', 'port': 'port-channel100', 'vlan': '100'}]
+        expected_output = [{'macAddr': '1234.5678.90ab', 'port': 'port-channel1', 'vlan': '1'},
+                           {'macAddr': '90ab.1234.5678', 'port': 'Ethernet1/1', 'vlan': '10'},
+                           {'macAddr': '5678.90ab.1234', 'port': 'port-channel100', 'vlan': '100'}]
 
-        self.assertEqual(device.pull_interface_mac_addresses(None), nxos_expected_output)
+        self.assertEqual(device.pull_interface_mac_addresses(None), expected_output)

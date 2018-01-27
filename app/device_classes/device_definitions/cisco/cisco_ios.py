@@ -1,5 +1,5 @@
 import re
-from ..cisco_base_device import CiscoBaseDevice
+from app.device_classes.device_definitions.cisco_base_device import CiscoBaseDevice
 
 
 class CiscoIOS(CiscoBaseDevice):

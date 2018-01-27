@@ -76,9 +76,9 @@ class TestCiscoNXOS(unittest.TestCase):
 </nf:rpc-reply>
 '''
 
-        nxos_expected_output = [{'local_iface': 'Ethernet1/1', 'platform': 'N5K-C5548UP',
-                                 'port_id': 'Ethernet1/1', 'device_id': 'Switch-DC-1'},
-                                {'local_iface': 'Ethernet1/2', 'platform': 'N5K-C5548UP',
-                                 'port_id': 'Ethernet1/2', 'device_id': 'Switch-DC-2'}]
+        expected_output = [{'local_iface': 'Ethernet1/1', 'platform': 'N5K-C5548UP',
+                            'port_id': 'Ethernet1/1', 'device_id': 'Switch-DC-1'},
+                           {'local_iface': 'Ethernet1/2', 'platform': 'N5K-C5548UP',
+                            'port_id': 'Ethernet1/2', 'device_id': 'Switch-DC-2'}]
 
-        self.assertEqual(device.pull_cdp_neighbor(None), nxos_expected_output)
+        self.assertEqual(device.pull_cdp_neighbor(None), expected_output)

@@ -1,6 +1,6 @@
 import unittest
 # import logging
-from app.scripts_bank.lib.functions import containsSkipped, removeDictKey, setUserCredentials
+from app.scripts_bank.lib.functions import containsSkipped, removeDictKey, setUserCredentials, isInteger
 
 
 class TestFunctions(unittest.TestCase):
@@ -35,3 +35,12 @@ class TestFunctions(unittest.TestCase):
 
         self.assertEqual(actual_output, expected_output)
         self.assertIsInstance(actual_output, dict)
+
+    def test_isInteger(self):
+        """Test function for determining if a provided variable is an integer."""
+        test_values = [1, '58', '90173', '1a', 'abc', 'bca1', '2.', ' ']
+        expected_output = [True, True, True, False, False, False, False, False]
+        actual_output = []
+        for x in test_values:
+            actual_output.append(isInteger(x))
+        self.assertEqual(actual_output, expected_output)

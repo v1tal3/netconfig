@@ -72,3 +72,12 @@ def removeDictKey(d, key):
     r = dict(d)
     del r[key]
     return r
+
+
+def isInteger(x):
+    """Test if provided value is an integer or not."""
+    try:
+        int(x)
+        return True
+    except ValueError:
+        return False

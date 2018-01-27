@@ -1,4 +1,6 @@
 from base_device import BaseDevice
+from app.scripts_bank.lib.functions import isInteger
+import re
 
 
 class CiscoBaseDevice(BaseDevice):
@@ -72,44 +74,6 @@ class CiscoBaseDevice(BaseDevice):
                     data.append(interface)
                 except IndexError:
                     continue
-
-        return data
-
-    def cleanup_cdp_neighbor_output(self, result):
-        """Clean up returned 'show cdp neighbor' output."""
-        data = []
-        # Temporarily stores each body string when device hostname is on its own line
-        singleHostname = ''
-        skipHeader = True
-
-        for line in result:
-            try:
-                x = line.split()
-                if "Device" in x[0]:
-                    skipHeader = False
-                    continue
-                elif skipHeader:
-                    continue
-                # This is needed in case the hostname is too long and is returned on its own line
-                elif ' ' not in line:
-                    singleHostname += str(line)
-                else:
-                    if singleHostname:
-                        x.insert(0, singleHostname)
-                        singleHostname = ''
-                    interface = {}
-                    interface['device_id'] = x[0]
-                    interface['local_iface'] = x[1] + x[2]
-                    interface['hold_time'] = x[3]
-                    interface['capability'] = x[4]
-                    interface['platform'] = x[5]
-                    try:
-                        interface['port_id'] = x[6] + x[7]
-                    except IndexError:
-                        interface['port_id'] = x[6]
-                    data.append(interface)
-            except IndexError:
-                continue
 
         return data
 
@@ -191,3 +155,53 @@ class CiscoBaseDevice(BaseDevice):
         """
         command = self.cmd_show_version()
         return self.run_ssh_command(command, activeSession).splitlines()
+
+    def cleanup_cdp_neighbor_output(self, result):
+        """Clean up returned 'show cdp neighbor' output."""
+        data = []
+        # Temporarily stores each body string when device hostname is on its own line
+        singleHostname = ''
+        skipHeader = True
+
+        for line in result:
+            try:
+                x = line.split()
+                if "Device" in x[0]:
+                    skipHeader = False
+                    continue
+                elif skipHeader:
+                    continue
+                # This is needed in case the hostname is too long and is returned on its own line
+                elif ' ' not in line:
+                    singleHostname += str(line)
+                else:
+                    if singleHostname:
+                        x.insert(0, singleHostname)
+                        singleHostname = ''
+                    # Remove the Capabilities category by stripping any single-letter fields
+                    regex = re.compile(r'\b[A-Z]{1}\b')
+                    x = filter(lambda i: not regex.search(i), x)
+                    # Assign items to dictionary
+                    interface = {}
+                    interface['device_id'] = x[0]
+                    interface['local_iface'] = x[1] + ' ' + x[2]
+                    interface['hold_time'] = x[3]
+                    # interface['capability'] = x[4]
+                    if len(x) == 6:
+                        interface['platform'] = x[4]
+                        interface['port_id'] = x[5]
+                    elif len(x) == 7:
+                        if '/' in x[-1] or isInteger(x[-1]):
+                            interface['platform'] = x[-3]
+                            interface['port_id'] = x[-2] + ' ' + x[-1]
+                        else:
+                            interface['platform'] = x[-3] + ' ' + x[-2]
+                            interface['port_id'] = x[-1]
+                    elif len(x) == 8:
+                        interface['platform'] = x[4] + ' ' + x[5]
+                        interface['port_id'] = x[6] + ' ' + x[7]
+                    data.append(interface)
+            except IndexError:
+                continue
+
+        return data

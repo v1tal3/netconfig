@@ -1,4 +1,4 @@
-from ...scripts_bank.lib.netmiko_functions import runMultipleSSHCommandsInSession
+from app.scripts_bank.lib.netmiko_functions import runMultipleSSHCommandsInSession
 
 
 class BaseDevice(object):
