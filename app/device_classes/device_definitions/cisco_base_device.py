@@ -1,6 +1,4 @@
 from base_device import BaseDevice
-from app.scripts_bank.lib.functions import isInteger
-import re
 
 
 class CiscoBaseDevice(BaseDevice):
@@ -156,52 +154,62 @@ class CiscoBaseDevice(BaseDevice):
         command = self.cmd_show_version()
         return self.run_ssh_command(command, activeSession).splitlines()
 
-    def cleanup_cdp_neighbor_output(self, result):
-        """Clean up returned 'show cdp neighbor' output."""
+    def renameCDPInterfaces(self, x):
+        """Cleanup interface wording."""
+        x = x.replace('TenGigabitEthernet', 'Ten ')
+        x = x.replace('GigabitEthernet', 'Gig ')
+        x = x.replace('FastEthernet', 'Fas ')
+        x = x.replace('Ethernet', 'Eth ')
+        return x
+
+    def cleanup_cdp_neighbor_output(self, inputData):
+        """Clean up returned 'show cdp entry *' output."""
+        loopStart = ipAddrStart = True
         data = []
-        # Temporarily stores each body string when device hostname is on its own line
-        singleHostname = ''
-        skipHeader = True
+        output = {}
+        for line in inputData:
+            if "----" in line and loopStart:
+                # First loop iteration, skip this
+                loopStart = False
+            elif "Device ID" in line:
+                # Get device hostname
+                x = line.split(':')
+                output['device_id'] = str(x[1].strip())
+            elif "IP address" in line and ipAddrStart:
+                # Need to skip 2nd iteration (mgmt) of IP
+                x = line.split(':')
+                output['remote_ip'] = str(x[1].strip())
+                # Set to skip mgmt IP (if present) for device
+                ipAddrStart = False
+            elif "Platform" in line:
+                # Get platform.  In same line as capabilities, so split line by comma
+                x = line.split(',')
+                # We don't want the capabilities, so just get first part (platform)
+                y = x[0].split(':')
+                output['platform'] = str(y[1].strip())
+            elif "Interface" in line:
+                # Get local and remote interface
+                x = line.split(',')
+                # Counter for determining if on local or remote interface
+                i = True
+                for y in x:
+                    # First iteration is local interface, 2nd is remote
+                    y = y.split(':')
+                    if i:
+                        # First iteration
+                        output['local_iface'] = self.renameCDPInterfaces(y[1].strip())
+                        i = False
+                    else:
+                        # Second iteration
+                        output['port_id'] = self.renameCDPInterfaces(y[1].strip())
+            elif "----" in line:
+                # End of the device section. Save all output to 'data[]'
+                data.append(output)
+                # Reset output variable
+                output = {}
+                # Reset IP address counter
+                ipAddrStart = True
 
-        for line in result:
-            try:
-                x = line.split()
-                if "Device" in x[0]:
-                    skipHeader = False
-                    continue
-                elif skipHeader:
-                    continue
-                # This is needed in case the hostname is too long and is returned on its own line
-                elif ' ' not in line:
-                    singleHostname += str(line)
-                else:
-                    if singleHostname:
-                        x.insert(0, singleHostname)
-                        singleHostname = ''
-                    # Remove the Capabilities category by stripping any single-letter fields
-                    regex = re.compile(r'\b[A-Z]{1}\b')
-                    x = filter(lambda i: not regex.search(i), x)
-                    # Assign items to dictionary
-                    interface = {}
-                    interface['device_id'] = x[0]
-                    interface['local_iface'] = x[1] + ' ' + x[2]
-                    interface['hold_time'] = x[3]
-                    # interface['capability'] = x[4]
-                    if len(x) == 6:
-                        interface['platform'] = x[4]
-                        interface['port_id'] = x[5]
-                    elif len(x) == 7:
-                        if '/' in x[-1] or isInteger(x[-1]):
-                            interface['platform'] = x[-3]
-                            interface['port_id'] = x[-2] + ' ' + x[-1]
-                        else:
-                            interface['platform'] = x[-3] + ' ' + x[-2]
-                            interface['port_id'] = x[-1]
-                    elif len(x) == 8:
-                        interface['platform'] = x[4] + ' ' + x[5]
-                        interface['port_id'] = x[6] + ' ' + x[7]
-                    data.append(interface)
-            except IndexError:
-                continue
-
+        # There is no "----" at end of cmd output.  End of all output section. Save last device output to 'data[]'
+        data.append(output)
         return data

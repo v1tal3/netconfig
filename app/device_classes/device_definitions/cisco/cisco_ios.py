@@ -17,7 +17,7 @@ class CiscoIOS(CiscoBaseDevice):
 
     def cmd_cdp_neighbor(self):
         """Return command to display CDP/LLDP neighbors on device."""
-        command = "show cdp neighbors | begin ID"
+        command = "show cdp entry *"
         return command
 
     def pull_run_config(self, activeSession):
