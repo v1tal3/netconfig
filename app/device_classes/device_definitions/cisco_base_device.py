@@ -175,15 +175,8 @@ class CiscoBaseDevice(BaseDevice):
                 # Get device hostname
                 x = line.split(':')
                 output['device_id'] = str(x[1].strip())
-            elif "IP address" in line and ipAddrStart:
-                # IOS/IOS-XE devices
-                # Need to skip 2nd iteration (mgmt) of IP
-                x = line.split(':')
-                output['remote_ip'] = str(x[1].strip())
-                # Set to skip mgmt IP (if present) for device. Only use first IP address if multiple listed
-                ipAddrStart = False
-            elif "IPv4 Address" in line and ipAddrStart:
-                # NX-OS devices
+            elif "IP" in line and "ddress" in line and ipAddrStart:
+                # IOS/IOS-XE is 'IP address'.  NX-OS is 'IPv4 Address'.
                 # Need to skip 2nd iteration (mgmt) of IP
                 x = line.split(':')
                 output['remote_ip'] = str(x[1].strip())
