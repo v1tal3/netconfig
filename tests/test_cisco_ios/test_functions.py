@@ -66,3 +66,7 @@ FastEthernet1/0/3      unassigned      YES unset  administratively down down
             self.assertEqual(x['hold_time'], y['hold_time'])
             self.assertEqual(x['platform'], y['platform'])
             self.assertEqual(x['device_id'], y['device_id'])
+
+
+if __name__ == '__main__':
+    unittest.main()

@@ -43,3 +43,6 @@ FastEthernet1/0/3      unassigned      YES unset  administratively down down
         """Test pull_interface_mac_addresses function."""
         expected_output = ''
         self.assertEqual(self.device.pull_interface_mac_addresses(None), expected_output)
+
+if __name__ == '__main__':
+    unittest.main()

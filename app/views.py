@@ -1299,7 +1299,8 @@ def enterConfigMode(x):
 
     host = db_modifyDatabase.getHostByID(x)
     activeSession = retrieveSSHSession(host)
-    host.enter_config_mode(activeSession)
+    # Enter configuration mode on device using existing SSH session
+    activeSession.config_mode()
     writeToLog('entered config mode via iShell on host %s' % (host.hostname))
     return ('', 204)
 
@@ -1314,7 +1315,8 @@ def exitConfigMode(x):
 
     host = db_modifyDatabase.getHostByID(x)
     activeSession = retrieveSSHSession(host)
-    host.exit_config_mode(activeSession)
+    # Exit configuration mode on device using existing SSH session
+    activeSession.exit_config_mode()
 
     writeToLog('exited config mode via iShell on host %s' % (host.hostname))
     return ('', 204)

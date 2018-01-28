@@ -17,14 +17,6 @@ class BaseDevice(object):
         """Deletion function."""
         pass
 
-    def enter_config_mode(self, activeSession):
-        """Enter configuration mode on device using existing SSH session."""
-        activeSession.config_mode()
-
-    def exit_config_mode(self, activeSession):
-        """Exit configuration mode on device using existing SSH session."""
-        activeSession.exit_config_mode()
-
     def reset_session_mode(self, activeSession):
         """Check if existing SSH session is in config mode.
 

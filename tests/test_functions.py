@@ -1,5 +1,4 @@
 import unittest
-# import logging
 from app.scripts_bank.lib.functions import containsSkipped, removeDictKey, setUserCredentials, isInteger
 
 
@@ -44,3 +43,6 @@ class TestFunctions(unittest.TestCase):
         for x in test_values:
             actual_output.append(isInteger(x))
         self.assertEqual(actual_output, expected_output)
+
+if __name__ == '__main__':
+    unittest.main()
