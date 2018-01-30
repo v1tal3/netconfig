@@ -676,11 +676,17 @@ def confirmIntEnable(x):
 
     x = device id
     """
-    host = db_modifyDatabase.getHostByID(x)
-    # Removes dashes from interface in URL
-    return render_template("confirm/confirmintenable.html",
-                           host=host,
-                           interface=request.args.get('int', ''))
+    try:
+        host = db_modifyDatabase.getHostByID(x)
+        if host:
+            # Removes dashes from interface in URL
+            return render_template("confirm/confirmintenable.html",
+                                   host=host,
+                                   interface=request.args.get('int', ''))
+        else:
+            return redirect(url_for('index'))
+    except AttributeError:
+        return redirect(url_for('index'))
 
 
 @app.route('/confirm/confirmintdisable/<x>', methods=['GET', 'POST'])
@@ -738,7 +744,6 @@ def confirmIntEdit():
                            otherEncoded=otherEncoded)
 
 
-@app.route('/results/resultshostedit/', methods=['GET', 'POST'])
 @app.route('/results/resultshostedit/<x>', methods=['GET', 'POST'])
 def resultsHostEdit(x):
     """Confirm settings to edit host with in local database.
@@ -746,60 +751,67 @@ def resultsHostEdit(x):
     x = original host ID
     """
     storedHost = db_modifyDatabase.retrieveHostByID(x)
-    # Save all existing host variables, as the class stores get updated later in the function
-    origHostname = storedHost.hostname
-    origIpv4_addr = storedHost.ipv4_addr
-    origHosttype = storedHost.type
-    origIos_type = storedHost.ios_type
-    origLocal_creds = storedHost.local_creds
 
-    # Save form user inputs into new variables
-    hostname = request.form['hostname']
-    ipv4_addr = request.form['ipv4_addr']
-    hosttype = request.form['hosttype']
-    ios_type = request.form['ios_type']
-    if request.form['local_creds'] == 'True':
-        local_creds = True
-        local_creds_updated = True
-    elif request.form['local_creds'] == 'False':
-        local_creds = False
-        local_creds_updated = True
+    if storedHost:
+        # Save all existing host variables, as the class stores get updated later in the function
+        origHostname = storedHost.hostname
+        origIpv4_addr = storedHost.ipv4_addr
+        origHosttype = storedHost.type
+        origIos_type = storedHost.ios_type
+        origLocal_creds = storedHost.local_creds
+
+        # Save form user inputs into new variables
+        hostname = request.form['hostname']
+        ipv4_addr = request.form['ipv4_addr']
+        hosttype = request.form['hosttype']
+        ios_type = request.form['ios_type']
+        if request.form['local_creds'] == 'True':
+            local_creds = True
+            local_creds_updated = True
+        elif request.form['local_creds'] == 'False':
+            local_creds = False
+            local_creds_updated = True
+        else:
+            local_creds = ''
+            local_creds_updated = False
+
+        # If exists, disconnect any existing SSH sessions
+        #  and clear them from the SSH dict
+        try:
+            disconnectSpecificSSHSession(storedHost)
+            writeToLog('disconnected and cleared saved SSH session information for edited host %s' % (storedHost.hostname))
+        except (socket.error, EOFError):
+            writeToLog('no existing SSH sessions for edited host %s' % (storedHost.hostname))
+        except:
+            writeToLog('could not clear SSH session for edited host %s' % (storedHost.hostname))
+
+        result = db_modifyDatabase.editHostInDatabase(storedHost.id, hostname,
+                                                      ipv4_addr, hosttype,
+                                                      ios_type, local_creds,
+                                                      local_creds_updated)
+
+        if result:
+            # updatedHost = db_modifyDatabase.retrieveHostByID(x)
+            writeToLog('edited host %s in database' % (storedHost.hostname))
+            return render_template("results/resultshostedit.html",
+                                   title='Edit host confirm',
+                                   storedHost=storedHost,
+                                   hostname=hostname,
+                                   ipv4_addr=ipv4_addr,
+                                   hosttype=hosttype,
+                                   ios_type=ios_type,
+                                   local_creds=local_creds,
+                                   local_creds_updated=local_creds_updated,
+                                   origHostname=origHostname,
+                                   origIpv4_addr=origIpv4_addr,
+                                   origHosttype=origHosttype,
+                                   origIos_type=origIos_type,
+                                   origLocal_creds=origLocal_creds)
+        else:
+            return redirect(url_for('confirmHostEdit', x=storedHost))
+
     else:
-        local_creds = ''
-        local_creds_updated = False
-
-    # If exists, disconnect any existing SSH sessions
-    #  and clear them from the SSH dict
-    try:
-        disconnectSpecificSSHSession(storedHost)
-        writeToLog('disconnected and cleared saved SSH session information for edited host %s' % (storedHost.hostname))
-    except (socket.error, EOFError):
-        writeToLog('no existing SSH sessions for edited host %s' % (storedHost.hostname))
-    except:
-        writeToLog('could not clear SSH session for edited host %s' % (storedHost.hostname))
-
-    result = db_modifyDatabase.editHostInDatabase(storedHost.id, hostname, ipv4_addr, hosttype, ios_type, local_creds, local_creds_updated)
-
-    if result:
-        # updatedHost = db_modifyDatabase.retrieveHostByID(x)
-        writeToLog('edited host %s in database' % (storedHost.hostname))
-        return render_template("results/resultshostedit.html",
-                               title='Edit host confirm',
-                               storedHost=storedHost,
-                               hostname=hostname,
-                               ipv4_addr=ipv4_addr,
-                               hosttype=hosttype,
-                               ios_type=ios_type,
-                               local_creds=local_creds,
-                               local_creds_updated=local_creds_updated,
-                               origHostname=origHostname,
-                               origIpv4_addr=origIpv4_addr,
-                               origHosttype=origHosttype,
-                               origIos_type=origIos_type,
-                               origLocal_creds=origLocal_creds)
-    else:
-        return redirect(url_for('confirmHostEdit',
-                                x=storedHost))
+        return redirect(url_for('index'))
 
 
 @app.route('/confirm/confirmcmdcustom/', methods=['GET', 'POST'])
@@ -829,7 +841,6 @@ def confirmCfgCmdCustom():
 #################
 
 
-@app.route('/results/resultsinterfaceenabled/', methods=['GET', 'POST'])
 @app.route('/results/resultsinterfaceenabled/<x>/<y>', methods=['GET', 'POST'])
 def resultsIntEnabled(x, y):
     """Display results for enabling specific interface.
@@ -848,12 +859,9 @@ def resultsIntEnabled(x, y):
 
     writeToLog('enabled interface %s on host %s' % (y, host.hostname))
     return render_template("results/resultsinterfaceenabled.html",
-                           host=host,
-                           interface=y,
-                           result=result)
+                           host=host, interface=y, result=result)
 
 
-@app.route('/results/resultsinterfacedisabled/', methods=['GET', 'POST'])
 @app.route('/results/resultsinterfacedisabled/<x>/<y>', methods=['GET', 'POST'])
 def resultsIntDisabled(x, y):
     """Display results for disabling specific interface.
@@ -872,12 +880,9 @@ def resultsIntDisabled(x, y):
 
     writeToLog('disabled interface %s on host %s' % (y, host.hostname))
     return render_template("results/resultsinterfacedisabled.html",
-                           host=host,
-                           interface=y,
-                           result=result)
+                           host=host, interface=y, result=result)
 
 
-@app.route('/results/resultsinterfaceedit/', methods=['GET', 'POST'])
 @app.route('/results/resultsinterfaceedit/<x>/<datavlan>/<voicevlan>/<other>', methods=['GET', 'POST'])
 def resultsIntEdit(x, datavlan, voicevlan, other):
     """Display results for editing specific interface config settings.
@@ -909,16 +914,11 @@ def resultsIntEdit(x, datavlan, voicevlan, other):
     result = host.run_edit_interface_cmd(hostinterface, datavlan, voicevlan, other, activeSession)
 
     writeToLog('edited interface %s on host %s' % (hostinterface, host.hostname))
-    return render_template("results/resultsinterfaceedit.html",
-                           host=host,
-                           interface=hostinterface,
-                           datavlan=datavlan,
-                           voicevlan=voicevlan,
-                           other=other,
-                           result=result)
+    return render_template("results/resultsinterfaceedit.html", host=host,
+                           interface=hostinterface, datavlan=datavlan,
+                           voicevlan=voicevlan, other=other, result=result)
 
 
-@app.route('/results/resultshostdeleted/', methods=['GET', 'POST'])
 @app.route('/results/resultshostdeleted/<x>', methods=['GET', 'POST'])
 def resultsHostDeleted(x):
     """Display results for deleting device from local database.
@@ -926,17 +926,18 @@ def resultsHostDeleted(x):
     x = device ID
     """
     host = db_modifyDatabase.getHostByID(x)
-    # Removes host from database
-    result = db_modifyDatabase.deleteHostInDB(host.id)
-    if result:
-        disconnectSpecificSSHSession(host)
-        writeToLog('deleted host %s in database' % (host.hostname))
-        return render_template("results/resultshostdeleted.html",
-                               host=host,
-                               result=result)
+    if host:
+        # Removes host from database
+        result = db_modifyDatabase.deleteHostInDB(host.id)
+        if result:
+            disconnectSpecificSSHSession(host)
+            writeToLog('deleted host %s in database' % (host.hostname))
+            return render_template("results/resultshostdeleted.html",
+                                   host=host, result=result)
+        else:
+            return redirect(url_for('confirmHostDelete', x=host.id))
     else:
-        return redirect(url_for('confirmHostDelete',
-                                x=host.id))
+        return redirect(url_for('index'))
 
 
 @app.route('/results/resultscmdcustom/', methods=['GET', 'POST'])
