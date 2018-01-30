@@ -19,7 +19,7 @@ from scripts_bank import db_modifyDatabase
 from scripts_bank import netboxAPI
 from scripts_bank import ping_hosts as ph
 from scripts_bank.redis_logic import deleteUserInRedis, resetUserRedisExpireTimer, storeUserInRedis
-from scripts_bank.lib.functions import setUserCredentials
+from scripts_bank.lib.functions import removeDictKey, setUserCredentials
 from scripts_bank.lib.flask_functions import checkUserLoggedInStatus
 from scripts_bank.lib.netmiko_functions import disconnectFromSSH, getSSHSession
 from scripts_bank.lib.netmiko_functions import sessionIsAlive
@@ -209,7 +209,7 @@ def disconnectAllSSHSessions():
         if str(y[1]) == str(session['UUID']):
             disconnectFromSSH(ssh[x])
             host = db_modifyDatabase.getHostByID(y[0])
-            ssh = fn.removeDictKey(ssh, x)
+            ssh = removeDictKey(ssh, x)
             writeToLog('disconnected SSH session to device %s for user %s' % (host.hostname, y[1]))
 
     # Try statement needed as 500 error thrown if user is not currently logged in.
@@ -265,14 +265,9 @@ def ajaxCheckHostActiveSession(x):
     host = db_modifyDatabase.retrieveHostByID(x)
 
     if host:
-
         if checkHostActiveSSHSession(host):
             return 'True'
-        else:
-            return 'False'
-
-    else:
-        return 'False'
+    return 'False'
 
 
 def interfaceReplaceSlash(x):
@@ -378,6 +373,7 @@ def login():
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
     """Disconnect all SSH sessions by user."""
+    disconnectAllSSHSessions()
     try:
         currentUser = session['USER']
         deleteUserInRedis()
@@ -388,9 +384,8 @@ def logout():
         session.pop('UUID', None)
         writeToLog('deleted UUID %s for user %s as stored in session variable' % (u, currentUser), currentUser=currentUser)
     except KeyError:
+        writeToLog('Exception thrown on logout.')
         return redirect(url_for('index'))
-
-    disconnectAllSSHSessions()
     writeToLog('logged out')
 
     return redirect(url_for('index'))
@@ -690,8 +685,8 @@ def confirmIntDisable(x):
     x = device id
     """
     try:
+        host = db_modifyDatabase.getHostByID(x)
         if host:
-            host = db_modifyDatabase.getHostByID(x)
             # Removes dashes from interface in URL
             return render_template("confirm/confirmintdisable.html",
                                    host=host,

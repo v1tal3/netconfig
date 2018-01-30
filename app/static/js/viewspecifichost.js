@@ -234,7 +234,7 @@ $('#modalCmdShowCDPNeigh').on('show.bs.modal', function(event) {
 
   var modal = $(this)
 
-  modal.find('.modal-title').text('CDP Neighbors from ' + hostname)
+  modal.find('.modal-title').text('CDP Neighbors for ' + hostname)
   modal.find('.modal-result').load('/modalcmdshowcdpneigh/' + hostid)
 })
 
