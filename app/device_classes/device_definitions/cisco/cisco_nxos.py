@@ -123,8 +123,6 @@ class CiscoNXOS(CiscoBaseDevice):
         command = "show interface status | xml"
         result = self.run_ssh_command(command, activeSession)
 
-        # tableHeader = 'Interface,IPv4 Address,Name,State,Speed,Options'
-
         # If unable to pull interfaces, return False for both variables
         if containsSkipped(result) or not result:
             return False, False
