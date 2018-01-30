@@ -689,23 +689,33 @@ def confirmIntDisable(x):
 
     x = device id
     """
-    host = db_modifyDatabase.getHostByID(x)
-    # Removes dashes from interface in URL
-    return render_template("confirm/confirmintdisable.html",
-                           host=host,
-                           interface=request.args.get('int', ''))
+    try:
+        if host:
+            host = db_modifyDatabase.getHostByID(x)
+            # Removes dashes from interface in URL
+            return render_template("confirm/confirmintdisable.html",
+                                   host=host,
+                                   interface=request.args.get('int', ''))
+        else:
+            return redirect(url_for('index'))
+    except AttributeError:
+        return redirect(url_for('index'))
 
 
-@app.route('/confirm/confirmhostdelete/', methods=['GET', 'POST'])
 @app.route('/confirm/confirmhostdelete/<x>', methods=['GET', 'POST'])
 def confirmHostDelete(x):
     """Confirm deleting device interface from local database.
 
     x = device ID
     """
-    host = db_modifyDatabase.getHostByID(x)
-    return render_template("confirm/confirmhostdelete.html",
-                           host=host)
+    try:
+        host = db_modifyDatabase.getHostByID(x)
+        if host:
+            return render_template("confirm/confirmhostdelete.html", host=host)
+        else:
+            return redirect(url_for('index'))
+    except AttributeError:
+        return redirect(url_for('index'))
 
 
 @app.route('/confirm/confirmintedit/', methods=['POST'])
