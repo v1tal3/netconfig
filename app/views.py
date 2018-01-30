@@ -19,7 +19,7 @@ from scripts_bank import db_modifyDatabase
 from scripts_bank import netboxAPI
 from scripts_bank import ping_hosts as ph
 from scripts_bank.redis_logic import deleteUserInRedis, resetUserRedisExpireTimer, storeUserInRedis
-from scripts_bank.lib import functions as fn
+from scripts_bank.lib.functions import setUserCredentials
 from scripts_bank.lib.flask_functions import checkUserLoggedInStatus
 from scripts_bank.lib.netmiko_functions import disconnectFromSSH, getSSHSession
 from scripts_bank.lib.netmiko_functions import sessionIsAlive
@@ -90,8 +90,11 @@ def getSSHKeyForHost(host):
 
     # Store SSH Dict key as host.id followed by '-' followed by username and return.
     """
-    sshKey = str(host.id) + '--' + str(session['UUID'])
-    return sshKey
+    try:
+        sshKey = str(host.id) + '--' + str(session['UUID'])
+        return sshKey
+    except KeyError:
+        return None
 
 
 def checkHostActiveSSHSession(host):
@@ -155,7 +158,7 @@ def retrieveSSHSession(host):
         saved_id = str(g.db.hget('users', username))
         password = str(g.db.hget(str(saved_id), 'pw'))
 
-    creds = fn.setUserCredentials(username, password, privpw)
+    creds = setUserCredentials(username, password, privpw)
 
     # Retrieve SSH key for host
     sshKey = getSSHKeyForHost(host)
@@ -261,10 +264,13 @@ def ajaxCheckHostActiveSession(x):
     """
     host = db_modifyDatabase.retrieveHostByID(x)
 
-    result = checkHostActiveSSHSession(host)
+    if host:
 
-    if result:
-        return 'True'
+        if checkHostActiveSSHSession(host):
+            return 'True'
+        else:
+            return 'False'
+
     else:
         return 'False'
 

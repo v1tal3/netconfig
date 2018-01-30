@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-from app import app
 
 
 class UserCredentials(object):

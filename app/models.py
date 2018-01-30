@@ -1,5 +1,4 @@
 from app import db
-from math import ceil
 
 
 class User(db.Model):
