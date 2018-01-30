@@ -372,29 +372,20 @@ def login():
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
     """Disconnect all SSH sessions by user."""
-    currentUser = session['USER']
-    disconnectAllSSHSessions()
-    writeToLog('logged out')
-
-    # Delete user saved in Redis
     try:
+        currentUser = session['USER']
         deleteUserInRedis()
-        writeToLog('deleted user %s data stored in Redis' % (session['USER']))
-    except:
-        writeToLog('did not delete user data stored in Redis as no user currently logged in')
-    # Remove the username from the session if it is there
-    try:
+        writeToLog('deleted user %s data stored in Redis' % (currentUser))
         session.pop('USER', None)
         writeToLog('deleted user %s as stored in session variable' % (currentUser), currentUser=currentUser)
-    except:
-        writeToLog('did not delete user data stored in session variable as no user currently logged in')
-
-    try:
         u = session['UUID']
         session.pop('UUID', None)
         writeToLog('deleted UUID %s for user %s as stored in session variable' % (u, currentUser), currentUser=currentUser)
-    except:
-        writeToLog('did not delete UUID data stored in session variable as none is currently set for user', currentUser=currentUser)
+    except KeyError:
+        return redirect(url_for('index'))
+
+    disconnectAllSSHSessions()
+    writeToLog('logged out')
 
     return redirect(url_for('index'))
 
