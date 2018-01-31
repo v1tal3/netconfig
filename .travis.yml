@@ -5,3 +5,5 @@ install:
   - pip install -r requirements.txt
 script:
   python -m unittest discover
+notifications:
+  slack: netconfig-group:gUDIl72WBF0iDG8gAVQxXjyD
