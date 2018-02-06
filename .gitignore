@@ -9,5 +9,6 @@ scripts_bank/logs/*
 scripts_bank/textfiles/*
 instance/settings.py
 flask/
+flaskenv/
 tmp/*
 venv/
