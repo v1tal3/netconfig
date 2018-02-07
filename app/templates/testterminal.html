@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+	<div class="container-fluid">
+		<div class="row">
+			<div class="col-md-8">
+				<div class="well inline-headers">
+					<h2>
+						<span class="text-primary">Testing Terminal</span>
+						<span>{{ session['USER'] }}</span>
+					</h2>
+                </div>
+                <div id="term_demo"></div>
+			</div>
+		</div>
+	</div>
+{% endblock %}

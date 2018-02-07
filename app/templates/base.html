@@ -3,14 +3,15 @@
 {% block title %}NetConfig{% endblock %}
 {% block metas %}
 	{{ super() }}
-	<meta name="description" content="NetConfig">
-	<meta name="author" content="Matt Vitale">
+	<meta name="description" content="NetConfig" />
+	<meta name="author" content="Matt Vitale" />
 {% endblock %}
 {% block styles %}
 	{{ super() }}
-	<link rel="stylesheet" href="{{url_for('static', filename='css/font-awesome.min.css')}}">
-	<link rel="stylesheet" href="{{url_for('static', filename='DataTables/datatables.min.css')}}"> <!-- https://datatables.net/download/#bs/dt-1.10.16/b-1.4.2/fh-3.1.3/r-2.2.0/sl-1.2.3 -->
-	<link rel="stylesheet" href="{{url_for('static', filename='css/styles.css')}}">
+	<link rel="stylesheet" href="{{url_for('static', filename='css/font-awesome.min.css')}}" />
+	<link rel="stylesheet" href="{{url_for('static', filename='DataTables/datatables.min.css')}}" /> <!-- https://datatables.net/download/#bs/dt-1.10.16/b-1.4.2/fh-3.1.3/r-2.2.0/sl-1.2.3 -->
+	<link rel="stylesheet" href="{{url_for('static', filename='css/jquery.terminal-1.11.4.min.css')}}" /> <!-- https://terminal.jcubic.pl/ -->
+	<link rel="stylesheet" href="{{url_for('static', filename='css/styles.css')}}" />
 {% endblock %}
 {% block body %}
 	{% block navbar %}
@@ -39,8 +40,9 @@
 		<script src="{{url_for('static', filename='js/loadingoverlay.min.js')}}"></script> <!-- http://gasparesganga.com/labs/jquery-loading-overlay/-->
 		<script src="{{url_for('static', filename='js/loading.js')}}"></script> <!-- custom loading JS -->
 		<script src="{{url_for('static', filename='DataTables/datatables.min.js')}}"></script> <!-- https://datatables.net/download/#bs/dt-1.10.16/b-1.4.2/fh-3.1.3/r-2.2.0/sl-1.2.3 -->
+		<script src="{{url_for('static', filename='js/jquery.terminal-1.11.4.min.js')}}"></script> <!-- https://terminal.jcubic.pl/ -->
 		{% if session['USER'] %}
-		<script src="{{url_for('static', filename='js/countactivesessions.js')}}"></script>
+			<script src="{{url_for('static', filename='js/countactivesessions.js')}}"></script>
 		{% endif %}
 		{% if request.path == "/db/viewhosts" or request.path == "/db/viewhosts/" %}
 			<script src="{{url_for('static', filename='js/viewhosts.js')}}"></script>
@@ -51,6 +53,8 @@
 			<script src="{{url_for('static', filename='js/viewspecifichost.js')}}"></script>
 		{% elif "/modallocalcredentials" in request.path or "/results/resultshostedit" in request.path %}
 			<script src="{{url_for('static', filename='js/localcredentials.js')}}"></script>
+		{% elif "/testterminal" in request.path %}
+			<script src="{{url_for('static', filename='js/testterminal.js')}}"></script>
 		{% endif %}
 	{% endblock %}
 {% endblock %}
