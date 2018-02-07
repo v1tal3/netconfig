@@ -40,11 +40,6 @@ code {
     background-color: #f5f5f5;
     text-decoration: none;
 }
-.terminal {
-  --color: green;
-  --background: black;
-  --animation: terminal-bar;
- }
 #loading {
   display: none;
 }
@@ -111,3 +106,4 @@ div#loadingContent {
   display: none;
   text-align: center;
 */
+}

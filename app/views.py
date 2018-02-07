@@ -1465,12 +1465,4 @@ def editSettings():
                                    title='Edit Netconfig settings',
                                    file=s.readlines())
     except:
-        return render_template('errors/500.html', error="Unable to read Settings File"), 
-
-
-@app.route('/testterminal', methods=['GET', 'POST'])
-def testTerminal():
-    """Test terminal."""
-    initialChecks()
-
-    return render_template('/testterminal.html', title='Test Terminal')
+        return render_template('errors/500.html', error="Unable to read Settings File"), 500
