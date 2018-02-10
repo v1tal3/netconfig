@@ -1,4 +1,4 @@
-from base_device import BaseDevice
+from .base_device import BaseDevice
 
 
 class CiscoBaseDevice(BaseDevice):

@@ -6,16 +6,16 @@ Test writing backlog of functions:
 )
 
 device_classes-->device_definitions-->base_device
-    def reset_session_mode(self, activeSession):
-    def revert_session_mode(self, activeSession, originalState):
-    def run_ssh_command(self, command, activeSession):
-    def run_ssh_config_commands(self, cmdList, activeSession):
-    def run_multiple_commands(self, command, activeSession):
-    def run_multiple_config_commands(self, command, activeSession):
-    def get_cmd_output(self, command, activeSession):
-    def get_cmd_output_with_commas(self, command, activeSession):
-    def find_prompt_in_session(self, activeSession):
-    def replace_double_spaces_commas(self, x):
+    -x-def reset_session_mode(self, activeSession):
+    -x-def revert_session_mode(self, activeSession, originalState):
+    -x-def run_ssh_command(self, command, activeSession):
+    -x-def run_ssh_config_commands(self, cmdList, activeSession):
+    -x-def run_multiple_commands(self, command, activeSession):
+    -x-def run_multiple_config_commands(self, command, activeSession):
+    -x-def get_cmd_output(self, command, activeSession):
+    -x-def get_cmd_output_with_commas(self, command, activeSession):
+    -x-def find_prompt_in_session(self, activeSession):
+    ---def replace_double_spaces_commas(self, x):
 
 device_classes-->device_definitions-->cisco_base_device
     def check_invalid_input_detected(self, x):

@@ -1,5 +1,8 @@
 from app import app
-from urllib2 import urlopen
+try:
+    from urllib.request import urlopen # Python 3
+except ImportError:
+    from urllib2 import urlopen # Python 2
 from json import load
 
 # TODO refactor with requests

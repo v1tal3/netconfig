@@ -6,7 +6,10 @@ import socket
 
 from datetime import timedelta
 
-from urllib import quote_plus, unquote_plus
+try:
+    from urllib.parse import quote_plus, unquote_plus  # Python 3
+except ImportError:
+    from urllib import quote_plus, unquote_plus  # Python 2
 
 from app import app
 
@@ -15,14 +18,14 @@ from flask import request, session, url_for
 
 from redis import StrictRedis
 
-from scripts_bank import db_modifyDatabase
-from scripts_bank import netboxAPI
-from scripts_bank import ping_hosts as ph
-from scripts_bank.redis_logic import deleteUserInRedis, resetUserRedisExpireTimer, storeUserInRedis
-from scripts_bank.lib.functions import removeDictKey, setUserCredentials
-from scripts_bank.lib.flask_functions import checkUserLoggedInStatus
-from scripts_bank.lib.netmiko_functions import disconnectFromSSH, getSSHSession
-from scripts_bank.lib.netmiko_functions import sessionIsAlive
+from .scripts_bank import db_modifyDatabase
+from .scripts_bank import netboxAPI
+from .scripts_bank import ping_hosts as ph
+from .scripts_bank.redis_logic import deleteUserInRedis, resetUserRedisExpireTimer, storeUserInRedis
+from .scripts_bank.lib.functions import removeDictKey, setUserCredentials
+from .scripts_bank.lib.flask_functions import checkUserLoggedInStatus
+from .scripts_bank.lib.netmiko_functions import disconnectFromSSH, getSSHSession
+from .scripts_bank.lib.netmiko_functions import sessionIsAlive
 
 from .forms import AddHostForm, CustomCfgCommandsForm, CustomCommandsForm
 from .forms import EditHostForm, EditInterfaceForm, ImportHostsForm, LoginForm

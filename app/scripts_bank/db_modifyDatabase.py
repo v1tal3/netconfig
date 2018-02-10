@@ -1,7 +1,10 @@
 from app import app, db, models
 from sqlalchemy import asc, func
 from netaddr import IPAddress, core
-import netboxAPI
+try:
+    import netboxAPI  # Python 2
+except ImportError:
+    import app.scripts_bank.netboxAPI  # Python 3
 from ..device_classes import deviceType as dt
 
 

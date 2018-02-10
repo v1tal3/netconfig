@@ -1,7 +1,10 @@
 from app.device_classes.device_definitions.cisco_base_device import CiscoBaseDevice
 import re
 import xml.etree.cElementTree as ET
-from StringIO import StringIO
+try:
+    from io import StringIO  # Python 3
+except ImportError:
+    from StringIO import StringIO  # Python 2
 from app.scripts_bank.lib.functions import containsSkipped
 
 
