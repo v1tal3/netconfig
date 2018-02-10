@@ -445,9 +445,11 @@ def resultsAddHost():
     ipv4_addr = request.form['ipv4_addr']
     hosttype = request.form['hosttype']
     ios_type = request.form['ios_type']
+    print "Test"
     # If checkbox is unchecked, this fails as the request.form['local_creds'] value returned is False
     try:
-        local_creds = request.form['local_creds']
+        if request.form['local_creds']:
+            local_creds = True
     except:
         local_creds = False
 
