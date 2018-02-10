@@ -751,6 +751,9 @@ def resultsHostEdit(x):
 
     x = original host ID
     """
+    if 'modal' in x:
+        return ('', 204)
+
     storedHost = db_modifyDatabase.retrieveHostByID(x)
     # Save all existing host variables, as the class stores get updated later in the function
     origHostname = storedHost.hostname
