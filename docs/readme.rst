@@ -5,7 +5,10 @@ NetConfig
     :target: https://travis-ci.org/v1tal3/netconfig
 
 .. image:: https://travis-ci.org/v1tal3/netconfig.svg?branch=development
-   :target: https://travis-ci.org/v1tal3/netconfig
+    :target: https://travis-ci.org/v1tal3/netconfig
+
+.. image:: https://coveralls.io/repos/github/v1tal3/netconfig/badge.svg?branch=master
+    :target: https://coveralls.io/github/v1tal3/netconfig?branch=master
 
 
 What Is NetConfig?
