@@ -1,8 +1,5 @@
 from app import app
-from urllib2 import urlopen
-from json import load
-
-# TODO refactor with requests
+import requests
 
 
 class NetboxHost(object):
@@ -19,156 +16,134 @@ class NetboxHost(object):
 
 def getDeviceType(x):
     """Input type of device (network, database, server, etc), returns ID in Netbox database."""
-    response = []
+    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/device-roles/')
 
-    url = app.config['NETBOXSERVER']
-    url += "/api/dcim/device-roles/"
-    # url += "?limit=0"
-
-    # Open our url, load the JSON
-    response = urlopen(url)
-    json_obj = load(response)
-
-    for device in json_obj['results']:
-        if device['name'] == x:
-            return device['id']
-
-    return False
+    if r.status_code == requests.codes.ok:
+        for device in r.json()['results']:
+            if device['name'] == x:
+                return device['id']
+    else:
+        return False
 
 
 def getDeviceTypeOS(x):
-    """Input type of device (network, database, server, etc), returns ID in Netbox database."""
-    response = []
+    """Get Device Type of specific Netbox Device ID"""
+    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/device-types/' + str(x))
 
-    url = app.config['NETBOXSERVER']
-    url += "/api/dcim/device-types/"
-    url += str(x)
+    if r.status_code == requests.codes.ok:
 
-    # Open our url, load the JSON
-    response = urlopen(url)
-    json_obj = load(response)
+        # NOTE should probably put a try/catch around this
+        netconfigOS = r.json()['custom_fields']['Netconfig_OS']['label']
 
-    netconfigOS = str(json_obj['custom_fields']['Netconfig_OS']['label'])
+        if netconfigOS == 'IOS':
+            return 'cisco_ios'
+        elif netconfigOS == 'IOS-XE':
+            return 'cisco_xe'
+        elif netconfigOS == 'NX-OS':
+            return 'cisco_nxos'
+        elif netconfigOS == 'ASA':
+            return 'cisco_asa'
+        else:  # Default to simply cisco_ios
+            return 'cisco_ios'
 
-    if netconfigOS == 'IOS':
-        return 'cisco_ios'
-    elif netconfigOS == 'IOS-XE':
-        return 'cisco_xe'
-    elif netconfigOS == 'NX-OS':
-        return 'cisco_nxos'
-    elif netconfigOS == 'ASA':
-        return 'cisco_asa'
-    else:  # Default to simply cisco_ios
+    else:
+
+        # NOTE should this be False?
         return 'cisco_ios'
 
 
 def getHostByID(x):
-    """Return host info in same formate as SQLAlchemy responses, for X-Compatibility with local DB choice.
+    """Return host info in same format as SQLAlchemy responses, for X-Compatibility with local DB choice.
 
     x is host ID
     """
-    host = NetboxHost('', '', '', '', '')
 
-    response = []
+    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/devices/' + str(x))
 
-    url = app.config['NETBOXSERVER']
-    url += "/api/dcim/devices/"
-    url += str(x)
+    if r.status_code == requests.codes.ok:
+        data = r.json()
+        return NetboxHost(str(x), data['name'],
+                          data['primary_ip']['address'].split('/', 1)[0],
+                          data['device_type']['model'],
+                          # can we get this in the previous response?
+                          getDeviceTypeOS(data['device_type']['id']))
 
-    # Open our url, load the JSON
-    response = urlopen(url)
-    json_obj = load(response)
-
-    host.id = str(x)
-    host.hostname = str(json_obj['name'])
-    host.ipv4_addr = str(json_obj['primary_ip']['address'].split('/', 1)[0])
-    host.type = str(json_obj['device_type']['model'])
-    host.ios_type = str(getDeviceTypeOS(json_obj['device_type']['id']))
-
-    return host
+    else:
+        return None
 
 
 def getHosts():
     """Return all devices stored in Netbox."""
-    response = []
-    result = []
 
-    url = app.config['NETBOXSERVER']
-    url += "/api/dcim/devices/"
-    url += "?limit=0"
+    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/devices/?limit=0')
 
-    # Open our url, load the JSON
-    response = urlopen(url)
-    json_obj = load(response)
+    if r.status_code == requests.codes.ok:
 
-    for host in json_obj['results']:
-        if str(host['custom_fields']['Netconfig']) != 'None':
-            if str(host['custom_fields']['Netconfig']['label']) == 'Yes':
-                # Strip the CIDR notation from the end of the IP address, and store it back as the address for the returned host
-                host['primary_ip']['address'] = str(host['primary_ip']['address'].split('/', 1)[0])
-                result.append(host)
+        # NOTE probably don't need to strip primary_ip cidr.
+        # Not seeing this as a problem connecting
+        result = [host for host in r.json()['results']
+                  if host['custom_fields']['Netconfig'] and
+                  host['custom_fields']['Netconfig']['label'] == 'Yes']
 
-    return result
+        return result
+
+    else:
+
+        return None
 
 
 def getHostID(x):
     """Input device name/hostname, returns id as stored in Netbox."""
-    response = []
+    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/devices/?limit=0')
 
-    url = app.config['NETBOXSERVER']
-    url += "/api/dcim/devices/"
-    url += "?limit=0"
+    if r.status_code == requests.codes.ok:
 
-    # Open our url, load the JSON
-    response = urlopen(url)
-    json_obj = load(response)
+        for host in r.json()['results']:
+            if host['display_name'] == x:  # Network
+                return host['id']
 
-    for host in json_obj['results']:
-        if host['display_name'] == x:  # Network
-            return host['id']
+    else:
+
+        return None
 
 
-def getHostName(id):
+def getHostName(x):
     """Input ID, return device name from Netbox."""
-    response = []
+    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/devices/' + str(x))
 
-    url = app.config['NETBOXSERVER']
-    url += "/api/dcim/devices/"
-    url += str(id)
+    if r.status_code == requests.codes.ok:
 
-    # Open our url, load the JSON
-    response = urlopen(url)
-    json_obj = load(response)
+        # TODO add try/catch here
+        return r.json()['name']
 
-    return json_obj['name']
+    else:
+
+        return None
 
 
-def getHostIPAddr(id):
+def getHostIPAddr(x):
     """Input ID, return device IP address from Netbox."""
-    response = []
+    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/devices/' + str(x))
 
-    url = app.config['NETBOXSERVER']
-    url += "/api/dcim/devices/"
-    url += str(id)
+    if r.status_code == requests.codes.ok:
 
-    # Open our url, load the JSON
-    response = urlopen(url)
-    json_obj = load(response)
+        # TODO add try/catch here
+        return r.json()['primary_ip']['address'].split('/', 1)[0]
 
-    # Return IP address with trailing CIDR notation stripped off
-    return str(json_obj['primary_ip']['address'].split('/', 1)[0])
+    else:
+
+        return None
 
 
-def getHostType(id):
+def getHostType(x):
     """Input ID, return device type from Netbox."""
-    response = []
+    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/devices/' + str(x))
 
-    url = app.config['NETBOXSERVER']
-    url += "/api/dcim/devices/"
-    url += str(id)
+    if r.status_code == requests.codes.ok:
 
-    # Open our url, load the JSON
-    response = urlopen(url)
-    json_obj = load(response)
+        # TODO add try/catch here
+        return r.json()['device_type']['model']
 
-    return json_obj['device_type']['model']
+    else:
+
+        return None
