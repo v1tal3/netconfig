@@ -1,149 +1,133 @@
-from app import app
 import requests
 
 
 class NetboxHost(object):
-    """Class for storing device information pulled from Netbox via API calls."""
-
-    def __init__(self, id, hostname, ipv4_addr, type, ios_type):
-        """Initilization method."""
-        self.id = id
-        self.hostname = hostname
-        self.ipv4_addr = ipv4_addr
-        self.type = type
-        self.ios_type = ios_type
-
-
-def getDeviceType(x):
-    """Input type of device (network, database, server, etc), returns ID in Netbox database."""
-    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/device-roles/')
-
-    if r.status_code == requests.codes.ok:
-        for device in r.json()['results']:
-            if device['name'] == x:
-                return device['id']
-    else:
-        return False
-
-
-def getDeviceTypeOS(x):
-    """Get Device Type of specific Netbox Device ID"""
-    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/device-types/' + str(x))
-
-    if r.status_code == requests.codes.ok:
-
-        # NOTE should probably put a try/catch around this
-        netconfigOS = r.json()['custom_fields']['Netconfig_OS']['label']
-
-        if netconfigOS == 'IOS':
-            return 'cisco_ios'
-        elif netconfigOS == 'IOS-XE':
-            return 'cisco_xe'
-        elif netconfigOS == 'NX-OS':
-            return 'cisco_nxos'
-        elif netconfigOS == 'ASA':
-            return 'cisco_asa'
-        else:  # Default to simply cisco_ios
-            return 'cisco_ios'
-
-    else:
-
-        # NOTE should this be False?
-        return 'cisco_ios'
-
-
-def getHostByID(x):
-    """Return host info in same format as SQLAlchemy responses, for X-Compatibility with local DB choice.
-
-    x is host ID
     """
+    Netbox Host class for making calls to Netbox host
+    """
+    # TODO should be a database model
 
-    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/devices/' + str(x))
+    def __init__(self, url):
+        self.url = url
 
-    if r.status_code == requests.codes.ok:
-        data = r.json()
-        return NetboxHost(str(x), data['name'],
-                          data['primary_ip']['address'].split('/', 1)[0],
-                          data['device_type']['model'],
-                          # can we get this in the previous response?
-                          getDeviceTypeOS(data['device_type']['id']))
+    def getDeviceType(self, x):
+        """Input type of device (network, database, server, etc), returns ID in Netbox database."""
+        r = requests.get(self.url + '/api/dcim/device-roles/')
 
-    else:
-        return None
+        if r.status_code == requests.codes.ok:
+            for device in r.json()['results']:
+                if device['name'] == x:
+                    return device['id']
+        else:
+            return False
 
+    def getDeviceTypeOS(self, x):
+        """Get Device Type of specific Netbox Device ID"""
+        r = requests.get(self.url + '/api/dcim/device-types/' + str(x))
 
-def getHosts():
-    """Return all devices stored in Netbox."""
+        if r.status_code == requests.codes.ok:
 
-    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/devices/?limit=0')
+            # NOTE should probably put a try/catch around this
+            netconfigOS = r.json()['custom_fields']['Netconfig_OS']['label']
 
-    if r.status_code == requests.codes.ok:
+            if netconfigOS == 'IOS':
+                return 'cisco_ios'
+            elif netconfigOS == 'IOS-XE':
+                return 'cisco_xe'
+            elif netconfigOS == 'NX-OS':
+                return 'cisco_nxos'
+            elif netconfigOS == 'ASA':
+                return 'cisco_asa'
+            else:  # Default to simply cisco_ios
+                return 'cisco_ios'
 
-        # NOTE probably don't need to strip primary_ip cidr.
-        # Not seeing this as a problem connecting
-        result = [host for host in r.json()['results']
-                  if host['custom_fields']['Netconfig'] and
-                  host['custom_fields']['Netconfig']['label'] == 'Yes']
+        else:
 
-        return result
+            # NOTE should this be False?
+            return 'cisco_ios'
 
-    else:
+    def getHostByID(self, x):
+        """Return host info in same format as SQLAlchemy responses, for X-Compatibility with local DB choice.
 
-        return None
+        x is host ID
+        """
 
+        r = requests.get(self.url + '/api/dcim/devices/' + str(x))
 
-def getHostID(x):
-    """Input device name/hostname, returns id as stored in Netbox."""
-    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/devices/?limit=0')
+        if r.status_code == requests.codes.ok:
+            return r.json()
 
-    if r.status_code == requests.codes.ok:
+        else:
+            return None
 
-        for host in r.json()['results']:
-            if host['display_name'] == x:  # Network
-                return host['id']
+    def getHosts(self):
+        """Return all devices stored in Netbox."""
 
-    else:
+        r = requests.get(self.url + '/api/dcim/devices/?limit=0')
 
-        return None
+        if r.status_code == requests.codes.ok:
 
+            # NOTE probably don't need to strip primary_ip cidr.
+            # Not seeing this as a problem connecting
+            result = [host for host in r.json()['results']
+                      if host['custom_fields']['Netconfig'] and
+                      host['custom_fields']['Netconfig']['label'] == 'Yes']
 
-def getHostName(x):
-    """Input ID, return device name from Netbox."""
-    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/devices/' + str(x))
+            return result
 
-    if r.status_code == requests.codes.ok:
+        else:
 
-        # TODO add try/catch here
-        return r.json()['name']
+            return None
 
-    else:
+    def getHostID(self, x):
+        """Input device name/hostname, returns id as stored in Netbox."""
+        r = requests.get(self.url + '/api/dcim/devices/?limit=0')
 
-        return None
+        if r.status_code == requests.codes.ok:
 
+            for host in r.json()['results']:
+                if host['display_name'] == x:  # Network
+                    return host['id']
 
-def getHostIPAddr(x):
-    """Input ID, return device IP address from Netbox."""
-    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/devices/' + str(x))
+        else:
 
-    if r.status_code == requests.codes.ok:
+            return None
 
-        # TODO add try/catch here
-        return r.json()['primary_ip']['address'].split('/', 1)[0]
+    def getHostName(self, x):
+        """Input ID, return device name from Netbox."""
+        r = requests.get(self.url + '/api/dcim/devices/' + str(x))
 
-    else:
+        if r.status_code == requests.codes.ok:
 
-        return None
+            # TODO add try/catch here
+            return r.json()['name']
 
+        else:
 
-def getHostType(x):
-    """Input ID, return device type from Netbox."""
-    r = requests.get(app.config['NETBOXSERVER'] + '/api/dcim/devices/' + str(x))
+            return None
 
-    if r.status_code == requests.codes.ok:
+    def getHostIPAddr(self, x):
+        """Input ID, return device IP address from Netbox."""
+        r = requests.get(self.url + '/api/dcim/devices/' + str(x))
 
-        # TODO add try/catch here
-        return r.json()['device_type']['model']
+        if r.status_code == requests.codes.ok:
 
-    else:
+            # TODO add try/catch here
+            return r.json()['primary_ip']['address'].split('/', 1)[0]
 
-        return None
+        else:
+
+            return None
+
+    def getHostType(self, x):
+        """Input ID, return device type from Netbox."""
+        r = requests.get(self.url + '/api/dcim/devices/' + str(x))
+
+        if r.status_code == requests.codes.ok:
+
+            # TODO add try/catch here
+            return r.json()['device_type']['model']
+
+        else:
+
+            return None
