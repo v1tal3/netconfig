@@ -11,7 +11,7 @@ try:
 except ImportError:
     from urllib.parse import quote_plus, unquote_plus  # Python 3
 
-from app import app
+from app import app, netbox
 
 from flask import flash, g, jsonify, redirect, render_template
 from flask import request, session, url_for
@@ -19,7 +19,6 @@ from flask import request, session, url_for
 from redis import StrictRedis
 
 from .scripts_bank import db_modifyDatabase
-from .scripts_bank import netboxAPI
 from .scripts_bank import ping_hosts as ph
 from .scripts_bank.redis_logic import deleteUserInRedis, resetUserRedisExpireTimer, storeUserInRedis
 from .scripts_bank.lib.functions import removeDictKey, setUserCredentials
@@ -572,7 +571,7 @@ def viewHosts(page=1):
                                hosts=hosts,
                                status=status)
     elif app.config['DATALOCATION'] == 'netbox':
-        hosts = netboxAPI.getHosts()
+        hosts = netbox.getHosts()
         return render_template('/dcimnetbox.html',
                                title='View hosts in database',
                                hosts=hosts)
