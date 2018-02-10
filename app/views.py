@@ -883,7 +883,7 @@ def resultsIntEdit(x, datavlan, voicevlan, other):
 
     x = device id
     d = data vlan
-    v = voice vlandddd
+    v = voice vlan
     o = other
     """
     initialChecks()
@@ -898,8 +898,8 @@ def resultsIntEdit(x, datavlan, voicevlan, other):
     # Decode 'other' string
     other = unquote_plus(other).decode('utf-8')
 
-    # Replace '_' with '/'
-    other = interfaceReplaceSlash(other)
+    # Replace '___' with '/'
+    other = other.replace('___', '/')
 
     # Replace '\r\n' with '\n'
     other = other.replace('\r\n', '\n')
@@ -1032,7 +1032,7 @@ def modalEditInterfaceOnHost(x):
 
     activeSession = retrieveSSHSession(host)
 
-    # Removes dashes from interface in URLdddd
+    # Removes dashes from interface in URL
     # interface = interfaceReplaceSlash(y)
     # Replace's '=' with '.'
     # host.interface = interface.replace('=', '.')
@@ -1254,8 +1254,10 @@ def hostShellOutput(x, m, y):
     host = db_modifyDatabase.getHostByID(x)
     activeSession = retrieveSSHSession(host)
 
-    # Replace '_' with '/'
-    command = interfaceReplaceSlash(unquote_plus(y).decode('utf-8'))
+    # Replace '___' with '/'
+    x = unquote_plus(y).decode('utf-8')
+    command = x.replace('___', '/')
+    # command = interfaceReplaceSlash(unquote_plus(y).decode('utf-8'))
 
     # Append prompt and command executed to beginning of output
     # output.append(host.find_prompt_in_session(activeSession) + command)
@@ -1264,7 +1266,7 @@ def hostShellOutput(x, m, y):
     if command[-1] == '?':
         if m == 'c':
             # Get command output as a list.
-            # Insert list contents into 'output' list.dddd
+            # Insert list contents into 'output' list.
             configError = True
             output = ''
         else:
