@@ -10,7 +10,10 @@ app.config.from_object('config')
 app.config.from_pyfile('settings.py', silent=True)
 db = SQLAlchemy(app)
 Bootstrap(app)
-netbox = NetboxHost(app.config['NETBOXSERVER'])
+try:
+    netbox = NetboxHost(app.config['NETBOXSERVER'])
+except KeyError:
+    netbox = NetboxHost("''")
 
 from app import views, models
 
