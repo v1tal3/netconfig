@@ -7,9 +7,9 @@ import socket
 from datetime import timedelta
 
 try:
-    from urllib.parse import quote_plus, unquote_plus  # Python 3
-except ImportError:
     from urllib import quote_plus, unquote_plus  # Python 2
+except ImportError:
+    from urllib.parse import quote_plus, unquote_plus  # Python 3
 
 from app import app
 
