@@ -10,7 +10,9 @@ Update RHEL
 Update RHEL, install required system packages, and reboot
 
 .. code-block:: text
-
+    
+    sudo yum update
+    sudo yum install epel-release -y
     sudo yum upgrade
     sudo yum -y install gcc python python-devel python-pip nginx redis supervisor python-gunicorn git
     sudo reboot now
@@ -26,6 +28,7 @@ Set any password you choose.
 
     sudo adduser netconfig
     sudo passwd netconfig
+    sudo usermod -a -G wheel netconfig
 
 Switch to the new Netconfig user
 
@@ -100,7 +103,16 @@ Create symlink for netconfig file into nginx/sites-enabled
 
     sudo ln -s /etc/nginx/sites-available/netconfig /etc/nginx/sites-enabled
 
+Firewall Rules
+^^^^^^^^^^^^^^
 
+Create firewall rules for allowing access
+
+.. code-block:: text
+
+    sudo firewall-cmd --permanent --add-port 443/tcp
+    sudo firewall-cmd --reload
+    
 Service
 ^^^^^^^
 
